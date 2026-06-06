@@ -1,0 +1,654 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+#app{font-family:'Sora',sans-serif;min-height:600px;padding:1.5rem 1rem 2rem;background:transparent;position:relative;}
+.screen{display:none;}.screen.active{display:block;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.logo{font-size:18px;font-weight:700;color:var(--color-text-primary);letter-spacing:-0.5px;}.logo span{color:#4f8ef7;}
+.btn-icon{background:transparent;border:none;cursor:pointer;color:var(--color-text-secondary);display:flex;align-items:center;gap:4px;font-size:13px;font-family:'Sora',sans-serif;padding:4px 6px;border-radius:var(--border-radius-md);}
+.btn-icon:hover{background:var(--color-background-secondary);color:var(--color-text-primary);}
+.btn-primary{width:100%;padding:0.8rem;background:#4f8ef7;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:15px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;}
+.btn-primary:hover{opacity:0.88;}
+.deck-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color 0.15s,transform 0.1s;}
+.deck-card:hover{border-color:var(--color-border-secondary);transform:translateY(-1px);}
+.deck-name{font-size:15px;font-weight:600;color:var(--color-text-primary);margin-bottom:3px;}
+.deck-meta{font-size:12px;color:var(--color-text-secondary);}
+.deck-badges{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;}
+.deck-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;cursor:pointer;white-space:nowrap;}
+.badge-all{background:#e8f0fe;color:#2d5dd6;}.badge-retry{background:#fff0e8;color:#c95c10;}
+.badge-auto{background:#f0f4ff;color:#3b5fcf;border:0.5px solid #b5c8f8;}
+.badge-list{background:var(--color-background-secondary);color:var(--color-text-secondary);}
+.progress-bar-wrap{height:4px;background:var(--color-border-tertiary);border-radius:2px;margin-bottom:1.5rem;overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:2px;transition:width 0.2s;}
+.flash-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;padding:2rem 1.5rem;text-align:center;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:1.5rem;transition:border-color 0.15s;}
+.card-label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:0.75rem;}
+.card-front-text{font-size:30px;font-weight:700;color:var(--color-text-primary);letter-spacing:-0.5px;line-height:1.2;}
+.card-back-text{font-size:20px;font-weight:400;color:var(--color-text-secondary);margin-top:1rem;padding-top:1rem;border-top:0.5px solid var(--color-border-tertiary);width:100%;opacity:0;transform:translateY(6px);transition:opacity 0.25s,transform 0.25s;}
+.card-back-text.revealed{opacity:1;transform:translateY(0);}
+.answer-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.answer-buttons.visible{opacity:1;pointer-events:all;}
+.btn-wrong{padding:1rem;background:#fff0f0;border:0.5px solid #f5c1c1;border-radius:var(--border-radius-md);font-size:22px;cursor:pointer;font-family:'Sora',sans-serif;transition:transform 0.1s;color:#c0392b;}
+.btn-correct{padding:1rem;background:#f0fbf4;border:0.5px solid #9fe1b8;border-radius:var(--border-radius-md);font-size:22px;cursor:pointer;font-family:'Sora',sans-serif;transition:transform 0.1s;color:#1a7a3c;}
+.btn-wrong:hover{background:#fde;transform:scale(1.03);}.btn-correct:hover{background:#d4f8e3;transform:scale(1.03);}
+.btn-wrong:active,.btn-correct:active{transform:scale(0.97);}
+.mode-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:1rem;}
+.mode-chip.all{background:#e8f0fe;color:#2d5dd6;}.mode-chip.retry{background:#fff0e8;color:#c95c10;}
+.mode-chip.auto{background:#f0f4ff;color:#3b5fcf;}
+.countdown-ring{position:relative;width:36px;height:36px;margin:0 auto 0.75rem;}
+.countdown-ring svg{transform:rotate(-90deg);}
+.countdown-ring circle{fill:none;stroke:var(--color-border-tertiary);stroke-width:3;}
+.countdown-ring circle.prog{stroke:#4f8ef7;stroke-linecap:round;transition:stroke-dashoffset 0.05s linear;}
+.countdown-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--color-text-secondary);font-family:'DM Mono',monospace;}
+.result-wrap{text-align:center;padding:1.5rem 0.5rem 2rem;}
+.result-emoji{font-size:48px;margin-bottom:0.75rem;}
+.result-title{font-size:20px;font-weight:700;color:var(--color-text-primary);margin-bottom:0.4rem;}
+.result-sub{font-size:14px;color:var(--color-text-secondary);margin-bottom:1.5rem;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;}
+.stat-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.85rem;}
+.stat-val{font-size:26px;font-weight:700;color:var(--color-text-primary);}
+.stat-label{font-size:11px;color:var(--color-text-secondary);margin-top:2px;}
+.result-actions{display:flex;flex-direction:column;gap:10px;}
+.btn-retry{padding:0.85rem;background:#fff8f0;border:0.5px solid #f5c1a0;border-radius:var(--border-radius-md);font-size:15px;font-weight:600;cursor:pointer;color:#c95c10;font-family:'Sora',sans-serif;}
+.btn-retry:hover{opacity:0.8;}
+.btn-home{padding:0.85rem;background:transparent;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;font-weight:500;cursor:pointer;color:var(--color-text-secondary);font-family:'Sora',sans-serif;}
+.btn-home:hover{background:var(--color-background-secondary);}
+.word-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+.word-table th{text-align:left;font-size:11px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;padding:0 8px 8px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.word-table td{padding:9px 8px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle;}
+.word-table tr:last-child td{border-bottom:none;}
+.word-table tr:hover td{background:var(--color-background-secondary);}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.s-mastered{background:#e6f4ea;color:#1a7a3c;}.s-wrong{background:#fff0e8;color:#c95c10;}.s-untouched{background:var(--color-background-secondary);color:var(--color-text-tertiary);}
+.filter-bar{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap;}
+.filter-btn{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;color:var(--color-text-secondary);font-family:'Sora',sans-serif;}
+.filter-btn.active{background:#4f8ef7;color:#fff;border-color:#4f8ef7;}
+.review-section{margin-bottom:1.5rem;}
+.review-section-title{font-size:12px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;margin-bottom:0.75rem;}
+.review-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.5rem;}
+.review-stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.85rem;text-align:center;}
+.review-stat-val{font-size:24px;font-weight:700;}
+.review-stat-label{font-size:11px;color:var(--color-text-secondary);margin-top:2px;}
+.day-bar-wrap{margin-bottom:1.5rem;}
+.day-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.day-bar-label{font-size:12px;color:var(--color-text-secondary);width:32px;text-align:right;font-family:'DM Mono',monospace;}
+.day-bar-track{flex:1;height:8px;background:var(--color-border-tertiary);border-radius:4px;overflow:hidden;}
+.day-bar-fill{height:100%;border-radius:4px;}
+.day-bar-num{font-size:12px;color:var(--color-text-tertiary);width:28px;font-family:'DM Mono',monospace;}
+.weak-word-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:var(--border-radius-md);background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);margin:3px;color:var(--color-text-primary);}
+.modal-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:100;align-items:flex-start;justify-content:center;padding:2rem 1rem;min-height:500px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--color-background-primary);border-radius:var(--border-radius-lg);padding:1.5rem;width:100%;max-width:480px;border:0.5px solid var(--color-border-secondary);}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:1rem;color:var(--color-text-primary);}
+.modal label{font-size:13px;color:var(--color-text-secondary);display:block;margin-bottom:4px;}
+.modal input,.modal textarea{width:100%;margin-bottom:12px;font-family:'Sora',sans-serif;font-size:14px;}
+.modal textarea{height:110px;resize:vertical;}
+.modal-hint{font-size:12px;color:var(--color-text-tertiary);margin-bottom:12px;}
+.modal-actions{display:flex;gap:10px;}
+.btn-cancel{flex:1;padding:0.7rem;background:transparent;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;cursor:pointer;color:var(--color-text-secondary);font-family:'Sora',sans-serif;}
+.btn-cancel:hover{background:var(--color-background-secondary);}
+.btn-save{flex:2;padding:0.7rem;background:#4f8ef7;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;}
+.btn-save:hover{opacity:0.88;}
+.settings-section{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:1rem 1.25rem;margin-bottom:1rem;}
+.settings-row{display:flex;align-items:center;gap:12px;}
+.settings-label{font-size:13px;color:var(--color-text-secondary);white-space:nowrap;}
+.settings-val{font-size:13px;font-weight:600;color:var(--color-text-primary);min-width:42px;text-align:right;font-family:'DM Mono',monospace;}
+
+/* フルオート専用 */
+.auto-card-wrap{position:relative;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;}
+.auto-miss-flash{position:absolute;inset:0;border-radius:16px;background:rgba(192,57,43,0.12);border:2px solid #f5c1c1;opacity:0;pointer-events:none;transition:opacity 0.05s;}
+.auto-miss-flash.show{opacity:1;}
+.auto-hint{text-align:center;font-size:12px;color:var(--color-text-tertiary);margin-bottom:1rem;display:flex;align-items:center;justify-content:center;gap:6px;}
+.auto-progress-track{height:3px;background:var(--color-border-tertiary);border-radius:2px;margin-bottom:1.5rem;overflow:hidden;}
+.auto-progress-fill{height:100%;background:#4f8ef7;border-radius:2px;transition:width 0.05s linear;}
+.phase-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin:0 2px;transition:background 0.2s;}
+.phase-dot.active{background:#4f8ef7;}.phase-dot.inactive{background:var(--color-border-tertiary);}
+</style>
+
+<div id="app">
+
+<div id="home-screen" class="screen active">
+  <div class="topbar">
+    <div class="logo">flash<span>go</span></div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="btn-icon" id="btn-open-review"><i class="ti ti-calendar-stats" aria-hidden="true" style="font-size:17px;"></i></button>
+      <button class="btn-icon" id="btn-open-settings"><i class="ti ti-settings" aria-hidden="true" style="font-size:17px;"></i></button>
+      <button class="btn-icon" id="btn-add-deck" style="color:#4f8ef7;font-weight:600;"><i class="ti ti-plus" aria-hidden="true"></i> 追加</button>
+    </div>
+  </div>
+  <div id="deck-list"></div>
+  <p id="empty-msg" style="text-align:center;color:var(--color-text-tertiary);font-size:14px;padding:2rem 0;display:none;">デッキがまだありません。<br>「追加」ボタンで作ってみよう！</p>
+</div>
+
+<div id="study-screen" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" id="btn-to-home"><i class="ti ti-arrow-left" aria-hidden="true"></i> 戻る</button>
+    <span id="study-deck-name" style="font-size:14px;font-weight:600;color:var(--color-text-primary);"></span>
+    <span id="study-counter" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--color-text-secondary);"></span>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="background:#4f8ef7;"></div></div>
+  <div id="mode-chip-wrap"></div>
+  <div class="countdown-ring" id="countdown-ring">
+    <svg width="36" height="36" viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="15"/>
+      <circle cx="18" cy="18" r="15" class="prog" id="ring-prog" stroke-dasharray="94.2" stroke-dashoffset="94.2"/>
+    </svg>
+    <div class="countdown-num" id="countdown-num">—</div>
+  </div>
+  <div class="flash-card" id="flash-card">
+    <div class="card-label" id="card-front-label">英語</div>
+    <div class="card-front-text" id="card-front"></div>
+    <div class="card-back-text" id="card-back"></div>
+  </div>
+  <div class="answer-buttons" id="answer-buttons">
+    <button class="btn-wrong" id="btn-wrong" aria-label="不正解">✕</button>
+    <button class="btn-correct" id="btn-correct" aria-label="正解">〇</button>
+  </div>
+</div>
+
+<div id="auto-screen" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" id="btn-auto-home"><i class="ti ti-arrow-left" aria-hidden="true"></i> 戻る</button>
+    <span id="auto-deck-name" style="font-size:14px;font-weight:600;color:var(--color-text-primary);"></span>
+    <span id="auto-counter" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--color-text-secondary);"></span>
+  </div>
+  <div class="mode-chip auto" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:1rem;background:#f0f4ff;color:#3b5fcf;">
+    <i class="ti ti-player-play" aria-hidden="true" style="font-size:13px;"></i> フルオートモード
+  </div>
+  <div class="auto-progress-track"><div class="auto-progress-fill" id="auto-prog-fill" style="width:0%;"></div></div>
+  <div class="auto-hint">
+    <i class="ti ti-hand-click" aria-hidden="true" style="font-size:14px;"></i>
+    <span>✕ だと思ったら画面のどこかをタップ</span>
+  </div>
+  <div class="auto-card-wrap" id="auto-card-wrap">
+    <div class="flash-card" id="auto-flash-card" style="cursor:pointer;">
+      <div class="card-label" id="auto-front-label">英語</div>
+      <div class="card-front-text" id="auto-front"></div>
+      <div class="card-back-text" id="auto-back"></div>
+    </div>
+    <div class="auto-miss-flash" id="auto-miss-flash"></div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:6px;margin-bottom:1rem;" id="phase-dots"></div>
+  <div style="text-align:center;">
+    <button class="btn-icon" id="btn-auto-pause" style="margin:0 auto;font-size:13px;gap:6px;">
+      <i class="ti ti-player-pause" aria-hidden="true" style="font-size:15px;"></i> 一時停止
+    </button>
+  </div>
+</div>
+
+<div id="result-screen" class="screen">
+  <div class="result-wrap">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <div class="result-title" id="result-title">セッション完了！</div>
+    <div class="result-sub" id="result-sub">お疲れさまでした</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val" id="stat-correct" style="color:#1a7a3c;">0</div><div class="stat-label">〇 正解</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-wrong" style="color:#c0392b;">0</div><div class="stat-label">✕ 不正解</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-total">0</div><div class="stat-label">合計</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-rate" style="color:#4f8ef7;">0%</div><div class="stat-label">正解率</div></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn-retry" id="btn-retry-wrong" style="display:none;">✕ だった単語だけ再挑戦</button>
+      <button class="btn-primary" id="btn-restart-all">最初からもう一度</button>
+      <button class="btn-home" id="btn-result-home">ホームへ戻る</button>
+    </div>
+  </div>
+</div>
+
+<div id="list-screen" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" id="btn-list-back"><i class="ti ti-arrow-left" aria-hidden="true"></i> 戻る</button>
+    <span id="list-deck-title" style="font-size:14px;font-weight:600;color:var(--color-text-primary);"></span>
+    <span id="list-summary" style="font-size:12px;color:var(--color-text-secondary);font-family:'DM Mono',monospace;"></span>
+  </div>
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">すべて</button>
+    <button class="filter-btn" data-filter="mastered">習得済 ✓</button>
+    <button class="filter-btn" data-filter="wrong">要復習 ✕</button>
+    <button class="filter-btn" data-filter="untouched">未学習</button>
+  </div>
+  <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;">
+    <table class="word-table">
+      <thead><tr>
+        <th style="width:38%;">表</th><th style="width:42%;">裏</th><th style="width:20%;">状態</th>
+      </tr></thead>
+      <tbody id="word-table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="review-screen" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" id="btn-review-back"><i class="ti ti-arrow-left" aria-hidden="true"></i> 戻る</button>
+    <span style="font-size:14px;font-weight:600;color:var(--color-text-primary);">今日の振り返り</span>
+    <span id="review-date" style="font-size:12px;color:var(--color-text-secondary);font-family:'DM Mono',monospace;"></span>
+  </div>
+  <div class="review-stat-grid">
+    <div class="review-stat"><div class="review-stat-val" id="rv-total" style="color:#4f8ef7;">0</div><div class="review-stat-label">今日の枚数</div></div>
+    <div class="review-stat"><div class="review-stat-val" id="rv-correct" style="color:#1a7a3c;">0</div><div class="review-stat-label">〇 正解</div></div>
+    <div class="review-stat"><div class="review-stat-val" id="rv-wrong" style="color:#c0392b;">0</div><div class="review-stat-label">✕ 不正解</div></div>
+  </div>
+  <div class="review-section">
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:1rem 1.25rem;margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:13px;color:var(--color-text-secondary);">今日の正解率</span>
+        <span id="rv-rate-label" style="font-size:15px;font-weight:700;color:#4f8ef7;">—</span>
+      </div>
+      <div style="height:8px;background:var(--color-border-tertiary);border-radius:4px;overflow:hidden;">
+        <div id="rv-rate-bar" style="height:100%;background:#4f8ef7;border-radius:4px;width:0%;transition:width 0.6s;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="review-section">
+    <div class="review-section-title">過去7日間の学習枚数</div>
+    <div class="day-bar-wrap" id="week-bars"></div>
+  </div>
+  <div class="review-section">
+    <div class="review-section-title">今日やった単語</div>
+    <div id="rv-studied-wrap" style="display:flex;flex-wrap:wrap;"></div>
+    <p id="rv-studied-empty" style="font-size:13px;color:var(--color-text-tertiary);display:none;">まだ今日の学習記録がありません。</p>
+  </div>
+  <div class="review-section">
+    <div class="review-section-title"><i class="ti ti-flame" aria-hidden="true" style="font-size:13px;vertical-align:-1px;margin-right:4px;color:#c95c10;"></i>苦手な単語（要復習）</div>
+    <div id="rv-weak-wrap" style="display:flex;flex-wrap:wrap;"></div>
+    <p id="rv-weak-empty" style="font-size:13px;color:var(--color-text-tertiary);display:none;">苦手な単語はありません。</p>
+  </div>
+</div>
+
+</div>
+
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <h3>新しいデッキを作成</h3>
+    <label>デッキ名</label><input type="text" id="deck-name-input" placeholder="例：TOEIC英単語 Level 5" />
+    <label>表面のラベル</label><input type="text" id="front-label-input" placeholder="英語" />
+    <label>裏面のラベル</label><input type="text" id="back-label-input" placeholder="日本語" />
+    <label>単語を入力（1行 = 1枚、区切りは「,」か「:」）</label>
+    <textarea id="cards-input" placeholder="apple, りんご&#10;banana, バナナ&#10;cherry, さくらんぼ"></textarea>
+    <p class="modal-hint">「表,裏」の順で入力してください。</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btn-cancel-modal">キャンセル</button>
+      <button class="btn-save" id="btn-save-deck">保存する</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h3><i class="ti ti-settings" aria-hidden="true" style="font-size:15px;vertical-align:-1px;margin-right:6px;"></i>設定</h3>
+    <div class="settings-section">
+      <p style="font-size:13px;font-weight:600;color:var(--color-text-primary);margin-bottom:12px;">答えが出るまでの時間（通常・フルオート共通）</p>
+      <div class="settings-row">
+        <span class="settings-label"><i class="ti ti-clock" aria-hidden="true" style="font-size:14px;vertical-align:-2px;margin-right:4px;"></i>待機時間</span>
+        <input type="range" id="reveal-delay-slider" min="0" max="30" step="1" value="5" style="flex:1;" />
+        <span class="settings-val" id="reveal-delay-val">0.5秒</span>
+      </div>
+      <p style="font-size:11px;color:var(--color-text-tertiary);margin-top:8px;">0秒 = 即表示 ／ 最大3秒</p>
+    </div>
+    <div class="settings-section">
+      <p style="font-size:13px;font-weight:600;color:var(--color-text-primary);margin-bottom:12px;">フルオート：答え表示後の待機時間</p>
+      <div class="settings-row">
+        <span class="settings-label"><i class="ti ti-clock" aria-hidden="true" style="font-size:14px;vertical-align:-2px;margin-right:4px;"></i>次へ移る時間</span>
+        <input type="range" id="auto-next-slider" min="1" max="30" step="1" value="5" style="flex:1;" />
+        <span class="settings-val" id="auto-next-val">0.5秒</span>
+      </div>
+      <p style="font-size:11px;color:var(--color-text-tertiary);margin-top:8px;">答えを確認してから次のカードに移る時間</p>
+    </div>
+    <div class="settings-section">
+      <p style="font-size:13px;font-weight:600;color:var(--color-text-primary);margin-bottom:12px;">カウントダウン表示</p>
+      <div class="settings-row" style="justify-content:space-between;">
+        <span class="settings-label">リングを表示する</span>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+          <input type="checkbox" id="show-ring-toggle" checked style="width:auto;margin-bottom:0;" />
+          <span style="font-size:13px;color:var(--color-text-secondary);">オン</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" id="btn-close-settings" style="flex:1;">完了</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLE_DECKS=[{id:'sample-en',name:'英単語 Basic',frontLabel:'英語',backLabel:'日本語',
+  cards:[{f:'abandon',b:'捨てる・断念する'},{f:'absolute',b:'絶対的な・完全な'},
+    {f:'acquire',b:'習得する・取得する'},{f:'adapt',b:'適応する・改変する'},
+    {f:'assess',b:'評価する・査定する'},{f:'benefit',b:'利益・恩恵'},
+    {f:'capable',b:'能力のある・有能な'},{f:'confirm',b:'確認する・承認する'},
+    {f:'create',b:'作る・創造する'},{f:'define',b:'定義する・明確にする'},
+    {f:'effort',b:'努力・取り組み'},{f:'emerge',b:'現れる・台頭する'},
+    {f:'factor',b:'要因・要素'},{f:'generate',b:'生み出す・発生させる'},
+    {f:'impact',b:'影響・衝撃'}],
+  wrongIds:[],masteredIds:[]}];
+
+function todayStr(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function loadState(){try{const r=localStorage.getItem('flashgo_v4');if(r)return JSON.parse(r);}catch(e){}return{decks:SAMPLE_DECKS,settings:{revealDelay:500,autoNextDelay:500,showRing:true},dailyLog:{}};}
+function saveState(){try{localStorage.setItem('flashgo_v4',JSON.stringify(state));}catch(e){}}
+
+let state=loadState();
+if(!state.settings)state.settings={revealDelay:500,autoNextDelay:500,showRing:true};
+if(!state.settings.autoNextDelay)state.settings.autoNextDelay=500;
+if(!state.dailyLog)state.dailyLog={};
+
+let currentDeckId=null,studyQueue=[],currentIdx=0;
+let sessionCorrect=0,sessionWrong=0;
+let revealTimer=null,countdownInterval=null;
+let currentListDeckId=null,currentListFilter='all';
+let isAutoMode=false,autoTimer=null,autoPhase='question',autoPaused=false,autoMissed=false;
+
+const $=id=>document.getElementById(id);
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');}
+
+function logAnswer(cardF,cardB,deckId,correct){
+  const today=todayStr();
+  if(!state.dailyLog[today])state.dailyLog[today]={total:0,correct:0,wrong:0,cards:[]};
+  const log=state.dailyLog[today];log.total++;
+  if(correct)log.correct++;else log.wrong++;
+  const ex=log.cards.find(c=>c.f===cardF&&c.deckId===deckId);
+  if(ex){ex.correct+=correct?1:0;ex.wrong+=correct?0:1;}
+  else{log.cards.push({f:cardF,b:cardB,deckId,correct:correct?1:0,wrong:correct?0:1});}
+}
+
+function renderHome(){
+  const list=$('deck-list'),empty=$('empty-msg');list.innerHTML='';
+  if(!state.decks.length){empty.style.display='block';return;}
+  empty.style.display='none';
+  state.decks.forEach(deck=>{
+    const wrong=deck.wrongIds?deck.wrongIds.length:0,mastered=deck.masteredIds?deck.masteredIds.length:0;
+    const div=document.createElement('div');div.className='deck-card';
+    div.innerHTML=`<div style="flex:1;min-width:0;">
+      <div class="deck-name">${deck.name}</div>
+      <div class="deck-meta">${deck.cards.length}枚 · 習得済 ${mastered} · 要復習 ${wrong}</div>
+    </div>
+    <div class="deck-badges">
+      <span class="deck-badge badge-list" data-id="${deck.id}" data-mode="list"><i class="ti ti-list" style="font-size:11px;vertical-align:-1px;"></i></span>
+      ${wrong>0?`<span class="deck-badge badge-retry" data-id="${deck.id}" data-mode="retry">✕のみ</span>`:''}
+      <span class="deck-badge badge-auto" data-id="${deck.id}" data-mode="auto"><i class="ti ti-player-play" style="font-size:11px;vertical-align:-1px;"></i> AUTO</span>
+      <span class="deck-badge badge-all" data-id="${deck.id}" data-mode="all">全部</span>
+    </div>`;
+    list.appendChild(div);
+  });
+  list.querySelectorAll('.deck-badge').forEach(b=>{
+    b.addEventListener('click',e=>{
+      e.stopPropagation();
+      const m=b.dataset.mode,id=b.dataset.id;
+      if(m==='list')openList(id);
+      else if(m==='auto')startAuto(id,false);
+      else startStudy(id,m==='retry');
+    });
+  });
+  list.querySelectorAll('.deck-card').forEach(c=>{
+    c.addEventListener('click',e=>{
+      if(e.target.classList.contains('deck-badge')||e.target.closest('.deck-badge'))return;
+      const b=c.querySelector('[data-mode="all"]');if(b)startStudy(b.dataset.id,false);
+    });
+  });
+}
+
+/* ── 通常モード ── */
+function startStudy(deckId,retryOnly){
+  const deck=state.decks.find(d=>d.id===deckId);if(!deck)return;
+  currentDeckId=deckId;isAutoMode=false;
+  studyQueue=retryOnly?deck.cards.filter(c=>deck.wrongIds.includes(c.f)):[...deck.cards].sort(()=>Math.random()-0.5);
+  if(!studyQueue.length){alert('対象の単語がありません。');return;}
+  currentIdx=0;sessionCorrect=0;sessionWrong=0;
+  $('study-deck-name').textContent=deck.name;
+  $('mode-chip-wrap').innerHTML=retryOnly
+    ?`<div class="mode-chip retry"><i class="ti ti-refresh" aria-hidden="true"></i> 復習モード (${studyQueue.length}枚)</div>`
+    :`<div class="mode-chip all"><i class="ti ti-cards" aria-hidden="true"></i> 通常モード (${studyQueue.length}枚)</div>`;
+  showScreen('study-screen');showCard();
+}
+function showCard(){
+  const deck=state.decks.find(d=>d.id===currentDeckId);
+  const card=studyQueue[currentIdx],total=studyQueue.length;
+  $('study-counter').textContent=`${currentIdx+1} / ${total}`;
+  $('progress-fill').style.width=`${(currentIdx/total)*100}%`;
+  $('card-front-label').textContent=deck.frontLabel||'表';
+  $('card-front').textContent=card.f;
+  const back=$('card-back');
+  back.textContent=(deck.backLabel?deck.backLabel+'：':'')+card.b;
+  back.classList.remove('revealed');$('answer-buttons').classList.remove('visible');
+  clearTimeout(revealTimer);clearInterval(countdownInterval);
+  const delay=state.settings.revealDelay,ring=$('countdown-ring');
+  ring.style.display=(state.settings.showRing&&delay>0)?'block':'none';
+  if(delay===0){back.classList.add('revealed');$('answer-buttons').classList.add('visible');return;}
+  if(state.settings.showRing){
+    const prog=$('ring-prog');prog.style.strokeDashoffset=94.2;
+    $('countdown-num').textContent=(delay/1000).toFixed(1);
+    const t0=Date.now();
+    countdownInterval=setInterval(()=>{
+      const rem=Math.max(0,delay-(Date.now()-t0));
+      prog.style.strokeDashoffset=94.2*(rem/delay);
+      $('countdown-num').textContent=(rem/1000).toFixed(1);
+      if(rem===0)clearInterval(countdownInterval);
+    },50);
+  }
+  revealTimer=setTimeout(()=>{clearInterval(countdownInterval);back.classList.add('revealed');$('answer-buttons').classList.add('visible');ring.style.display='none';},delay);
+}
+function handleAnswer(correct){
+  clearTimeout(revealTimer);clearInterval(countdownInterval);
+  const deck=state.decks.find(d=>d.id===currentDeckId);const card=studyQueue[currentIdx];
+  if(!deck.wrongIds)deck.wrongIds=[];if(!deck.masteredIds)deck.masteredIds=[];
+  if(correct){sessionCorrect++;deck.wrongIds=deck.wrongIds.filter(id=>id!==card.f);if(!deck.masteredIds.includes(card.f))deck.masteredIds.push(card.f);}
+  else{sessionWrong++;if(!deck.wrongIds.includes(card.f))deck.wrongIds.push(card.f);deck.masteredIds=deck.masteredIds.filter(id=>id!==card.f);}
+  logAnswer(card.f,card.b,currentDeckId,correct);saveState();
+  currentIdx++;if(currentIdx>=studyQueue.length)showResult();else showCard();
+}
+
+/* ── フルオートモード ── */
+function startAuto(deckId,retryOnly){
+  const deck=state.decks.find(d=>d.id===deckId);if(!deck)return;
+  currentDeckId=deckId;isAutoMode=true;
+  studyQueue=retryOnly?deck.cards.filter(c=>deck.wrongIds.includes(c.f)):[...deck.cards].sort(()=>Math.random()-0.5);
+  if(!studyQueue.length){alert('対象の単語がありません。');return;}
+  currentIdx=0;sessionCorrect=0;sessionWrong=0;autoPaused=false;
+  $('auto-deck-name').textContent=deck.name;
+  showScreen('auto-screen');
+  autoShowQuestion();
+}
+
+function autoShowQuestion(){
+  if(autoPaused)return;
+  const deck=state.decks.find(d=>d.id===currentDeckId);
+  const card=studyQueue[currentIdx],total=studyQueue.length;
+  $('auto-counter').textContent=`${currentIdx+1} / ${total}`;
+  $('auto-front-label').textContent=deck.frontLabel||'表';
+  $('auto-front').textContent=card.f;
+  const back=$('auto-back');back.textContent=(deck.backLabel?deck.backLabel+'：':'')+card.b;
+  back.classList.remove('revealed');
+  autoMissed=false;
+  $('auto-miss-flash').classList.remove('show');
+  $('auto-flash-card').style.borderColor='';
+  $('auto-prog-fill').style.background='#4f8ef7';
+
+  autoPhase='question';updatePhaseDots();
+
+  const delay=state.settings.revealDelay;
+  let start=Date.now();
+  function tick(){
+    if(autoPaused)return;
+    const pct=Math.min(100,Math.round(((Date.now()-start)/delay)*100));
+    $('auto-prog-fill').style.width=pct+'%';
+    if(pct<100){autoTimer=setTimeout(tick,30);}
+    else{
+      back.classList.add('revealed');
+      autoPhase='answer';updatePhaseDots();
+      $('auto-prog-fill').style.width='0%';
+      $('auto-prog-fill').style.background='var(--color-border-secondary)';
+      const nextDelay=state.settings.autoNextDelay;
+      let s2=Date.now();
+      function tick2(){
+        if(autoPaused)return;
+        const p2=Math.min(100,Math.round(((Date.now()-s2)/nextDelay)*100));
+        $('auto-prog-fill').style.width=p2+'%';
+        if(p2<100){autoTimer=setTimeout(tick2,30);}
+        else{autoCommit();}
+      }
+      autoTimer=setTimeout(tick2,30);
+    }
+  }
+  if(delay===0){
+    back.classList.add('revealed');autoPhase='answer';updatePhaseDots();
+    $('auto-prog-fill').style.width='0%';$('auto-prog-fill').style.background='var(--color-border-secondary)';
+    const nextDelay=state.settings.autoNextDelay;let s2=Date.now();
+    function tick2(){if(autoPaused)return;const p2=Math.min(100,Math.round(((Date.now()-s2)/nextDelay)*100));$('auto-prog-fill').style.width=p2+'%';if(p2<100){autoTimer=setTimeout(tick2,30);}else{autoCommit();}}
+    autoTimer=setTimeout(tick2,30);
+  } else {
+    $('auto-prog-fill').style.width='0%';autoTimer=setTimeout(tick,30);
+  }
+}
+
+function autoCommit(){
+  const correct=!autoMissed;
+  const deck=state.decks.find(d=>d.id===currentDeckId);const card=studyQueue[currentIdx];
+  if(!deck.wrongIds)deck.wrongIds=[];if(!deck.masteredIds)deck.masteredIds=[];
+  if(correct){sessionCorrect++;deck.wrongIds=deck.wrongIds.filter(id=>id!==card.f);if(!deck.masteredIds.includes(card.f))deck.masteredIds.push(card.f);}
+  else{sessionWrong++;if(!deck.wrongIds.includes(card.f))deck.wrongIds.push(card.f);deck.masteredIds=deck.masteredIds.filter(id=>id!==card.f);}
+  logAnswer(card.f,card.b,currentDeckId,correct);saveState();
+  currentIdx++;
+  if(currentIdx>=studyQueue.length){showResult();}
+  else{autoShowQuestion();}
+}
+
+function updatePhaseDots(){
+  const wrap=$('phase-dots');wrap.innerHTML='';
+  ['question','answer'].forEach(p=>{
+    const d=document.createElement('span');d.className='phase-dot '+(autoPhase===p?'active':'inactive');
+    wrap.appendChild(d);
+  });
+}
+
+$('auto-card-wrap').addEventListener('click',()=>{
+  if(autoPaused)return;
+  if(autoPhase==='question'||autoPhase==='answer'){
+    autoMissed=true;
+    const flash=$('auto-miss-flash');flash.classList.add('show');
+    $('auto-flash-card').style.borderColor='#f5c1c1';
+    setTimeout(()=>{flash.classList.remove('show');$('auto-flash-card').style.borderColor='';},300);
+  }
+});
+
+$('btn-auto-pause').addEventListener('click',()=>{
+  autoPaused=!autoPaused;
+  const btn=$('btn-auto-pause');
+  if(autoPaused){
+    clearTimeout(autoTimer);
+    btn.innerHTML=`<i class="ti ti-player-play" aria-hidden="true" style="font-size:15px;"></i> 再開`;
+  } else {
+    btn.innerHTML=`<i class="ti ti-player-pause" aria-hidden="true" style="font-size:15px;"></i> 一時停止`;
+    autoShowQuestion();
+  }
+});
+$('btn-auto-home').addEventListener('click',()=>{clearTimeout(autoTimer);autoPaused=false;showScreen('home-screen');renderHome();});
+
+/* ── 結果 ── */
+function showResult(){
+  const total=studyQueue.length,rate=Math.round((sessionCorrect/total)*100);
+  $('stat-correct').textContent=sessionCorrect;$('stat-wrong').textContent=sessionWrong;
+  $('stat-total').textContent=total;$('stat-rate').textContent=rate+'%';
+  const deck=state.decks.find(d=>d.id===currentDeckId);const remaining=deck.wrongIds?deck.wrongIds.length:0;
+  $('result-emoji').textContent=rate===100?'🏆':rate>=70?'👍':'💪';
+  $('result-title').textContent=rate===100?'パーフェクト！':'セッション完了！';
+  $('result-sub').textContent=rate===100?'すべて正解しました！':`あと ${remaining} 枚を復習しましょう。`;
+  const rb=$('btn-retry-wrong');
+  if(sessionWrong>0&&remaining>0){rb.style.display='block';rb.textContent=`✕ だった ${remaining} 枚だけ再挑戦`;}
+  else rb.style.display='none';
+  showScreen('result-screen');
+}
+
+/* ── 単語一覧 ── */
+function openList(deckId){currentListDeckId=deckId;currentListFilter='all';document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));renderList();showScreen('list-screen');}
+function renderList(){
+  const deck=state.decks.find(d=>d.id===currentListDeckId);if(!deck)return;
+  $('list-deck-title').textContent=deck.name;
+  const mastered=deck.masteredIds||[],wrongIds=deck.wrongIds||[];
+  $('list-summary').textContent=`${mastered.length}習得 / ${wrongIds.length}要復習`;
+  const tbody=$('word-table-body');tbody.innerHTML='';
+  const filtered=deck.cards.filter(c=>{
+    if(currentListFilter==='mastered')return mastered.includes(c.f);
+    if(currentListFilter==='wrong')return wrongIds.includes(c.f);
+    if(currentListFilter==='untouched')return !mastered.includes(c.f)&&!wrongIds.includes(c.f);
+    return true;
+  });
+  if(!filtered.length){const tr=document.createElement('tr');tr.innerHTML=`<td colspan="3" style="text-align:center;color:var(--color-text-tertiary);padding:1.5rem;">該当する単語がありません</td>`;tbody.appendChild(tr);return;}
+  filtered.forEach(c=>{
+    const isMastered=mastered.includes(c.f),isWrong=wrongIds.includes(c.f);
+    const badge=isMastered?`<span class="status-badge s-mastered"><i class="ti ti-check" style="font-size:11px;"></i> 習得</span>`
+      :isWrong?`<span class="status-badge s-wrong"><i class="ti ti-x" style="font-size:11px;"></i> 要復習</span>`
+      :`<span class="status-badge s-untouched">未学習</span>`;
+    const tr=document.createElement('tr');tr.innerHTML=`<td style="font-weight:600;">${c.f}</td><td style="color:var(--color-text-secondary);">${c.b}</td><td>${badge}</td>`;tbody.appendChild(tr);
+  });
+}
+document.querySelectorAll('.filter-btn').forEach(b=>{
+  b.addEventListener('click',()=>{currentListFilter=b.dataset.filter;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderList();});
+});
+
+/* ── 振り返り ── */
+function openReview(){
+  const today=todayStr();const d=new Date();
+  $('review-date').textContent=`${d.getMonth()+1}月${d.getDate()}日`;
+  const tl=state.dailyLog[today]||{total:0,correct:0,wrong:0,cards:[]};
+  $('rv-total').textContent=tl.total;$('rv-correct').textContent=tl.correct;$('rv-wrong').textContent=tl.wrong;
+  const rate=tl.total>0?Math.round((tl.correct/tl.total)*100):0;
+  $('rv-rate-label').textContent=tl.total>0?rate+'%':'—';$('rv-rate-bar').style.width=(tl.total>0?rate:0)+'%';
+  const weekBars=$('week-bars');weekBars.innerHTML='';
+  const maxVal=Math.max(1,...Array.from({length:7},(_,i)=>{const dd=new Date();dd.setDate(dd.getDate()-i);const k=`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;return(state.dailyLog[k]||{total:0}).total;}));
+  for(let i=6;i>=0;i--){
+    const dd=new Date();dd.setDate(dd.getDate()-i);
+    const k=`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
+    const val=(state.dailyLog[k]||{total:0}).total,label=i===0?'今日':`${dd.getMonth()+1}/${dd.getDate()}`;
+    const pct=Math.round((val/maxVal)*100);
+    const row=document.createElement('div');row.className='day-bar-row';
+    row.innerHTML=`<span class="day-bar-label">${label}</span><div class="day-bar-track"><div class="day-bar-fill" style="width:${pct}%;background:${i===0?'#4f8ef7':'var(--color-border-secondary)'};"></div></div><span class="day-bar-num">${val}</span>`;
+    weekBars.appendChild(row);
+  }
+  const sw=$('rv-studied-wrap'),se=$('rv-studied-empty');sw.innerHTML='';
+  if(tl.cards&&tl.cards.length>0){se.style.display='none';tl.cards.forEach(c=>{const ch=document.createElement('div');ch.className='weak-word-chip';ch.innerHTML=`${c.f}<span style="font-size:11px;font-weight:600;font-family:'DM Mono',monospace;color:${c.wrong>0?'#c95c10':'#1a7a3c'};">${c.wrong>0?'✕'+c.wrong:'✓'}</span>`;sw.appendChild(ch);});}
+  else se.style.display='block';
+  const ww=$('rv-weak-wrap'),we=$('rv-weak-empty');ww.innerHTML='';
+  const allWeak=[];state.decks.forEach(deck=>{(deck.wrongIds||[]).forEach(f=>{const card=deck.cards.find(c=>c.f===f);if(card)allWeak.push({f:card.f,b:card.b});});});
+  if(allWeak.length>0){we.style.display='none';allWeak.forEach(w=>{const ch=document.createElement('div');ch.className='weak-word-chip';ch.innerHTML=`<span>${w.f}</span><span style="font-size:11px;color:var(--color-text-tertiary);">${w.b}</span>`;ww.appendChild(ch);});}
+  else we.style.display='block';
+  showScreen('review-screen');
+}
+
+/* ── 設定 ── */
+function delayToLabel(v){const ms=v*100;if(ms===0)return '0秒（即表示）';return`${(ms/1000).toFixed(1)}秒`;}
+function syncSettingsUI(){
+  const ms=state.settings.revealDelay,v=Math.round(ms/100);
+  $('reveal-delay-slider').value=v;$('reveal-delay-val').textContent=delayToLabel(v);
+  const ms2=state.settings.autoNextDelay,v2=Math.round(ms2/100);
+  $('auto-next-slider').value=v2;$('auto-next-val').textContent=delayToLabel(v2);
+  $('show-ring-toggle').checked=state.settings.showRing;
+}
+$('reveal-delay-slider').addEventListener('input',e=>{const v=parseInt(e.target.value);state.settings.revealDelay=v*100;$('reveal-delay-val').textContent=delayToLabel(v);saveState();});
+$('auto-next-slider').addEventListener('input',e=>{const v=parseInt(e.target.value);state.settings.autoNextDelay=v*100;$('auto-next-val').textContent=delayToLabel(v);saveState();});
+$('show-ring-toggle').addEventListener('change',e=>{state.settings.showRing=e.target.checked;saveState();});
+$('btn-open-settings').addEventListener('click',()=>{syncSettingsUI();$('settings-modal').classList.add('open');});
+$('btn-close-settings').addEventListener('click',()=>$('settings-modal').classList.remove('open'));
+$('settings-modal').addEventListener('click',e=>{if(e.target===$('settings-modal'))$('settings-modal').classList.remove('open');});
+$('btn-open-review').addEventListener('click',openReview);
+$('btn-review-back').addEventListener('click',()=>{showScreen('home-screen');renderHome();});
+$('btn-list-back').addEventListener('click',()=>{showScreen('home-screen');renderHome();});
+$('btn-add-deck').addEventListener('click',()=>{$('deck-name-input').value='';$('front-label-input').value='';$('back-label-input').value='';$('cards-input').value='';$('add-modal').classList.add('open');});
+$('btn-cancel-modal').addEventListener('click',()=>$('add-modal').classList.remove('open'));
+$('add-modal').addEventListener('click',e=>{if(e.target===$('add-modal'))$('add-modal').classList.remove('open');});
+$('btn-save-deck').addEventListener('click',()=>{
+  const name=$('deck-name-input').value.trim(),fl=$('front-label-input').value.trim()||'表',bl=$('back-label-input').value.trim()||'裏',raw=$('cards-input').value;
+  if(!name){alert('デッキ名を入力してください。');return;}
+  const lines=raw.trim().split('\n').filter(l=>l.trim()),cards=[];
+  lines.forEach(line=>{const sep=line.includes(':')?':':',';const parts=line.split(sep).map(s=>s.trim());if(parts.length>=2&&parts[0]&&parts[1])cards.push({f:parts[0],b:parts[1]});});
+  if(!cards.length){alert('単語が読み込めませんでした。');return;}
+  state.decks.push({id:'deck_'+Date.now(),name,frontLabel:fl,backLabel:bl,cards,wrongIds:[],masteredIds:[]});
+  saveState();$('add-modal').classList.remove('open');renderHome();
+});
+$('btn-wrong').addEventListener('click',()=>handleAnswer(false));
+$('btn-correct').addEventListener('click',()=>handleAnswer(true));
+$('btn-to-home').addEventListener('click',()=>{clearTimeout(revealTimer);clearInterval(countdownInterval);showScreen('home-screen');renderHome();});
+$('btn-result-home').addEventListener('click',()=>{showScreen('home-screen');renderHome();});
+$('btn-restart-all').addEventListener('click',()=>{if(isAutoMode)startAuto(currentDeckId,false);else startStudy(currentDeckId,false);});
+$('btn-retry-wrong').addEventListener('click',()=>{if(isAutoMode)startAuto(currentDeckId,true);else startStudy(currentDeckId,true);});
+
+renderHome();
+</script>
