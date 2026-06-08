@@ -1,0 +1,1108 @@
+
+<!doctype html>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;overflow-x:hidden;}
+#app{font-family:'Sora',sans-serif;min-height:100vh;padding:16px 1rem 32px;background:transparent;position:relative;width:100%;max-width:430px;margin:0 auto;}
+.screen{display:none;}.screen.active{display:block;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-top:4px;}
+.logo{font-size:20px;font-weight:700;color:var(--color-text-primary);letter-spacing:-0.5px;flex-shrink:0;}.logo span{color:#4f8ef7;}
+.topbar-right{display:flex;gap:2px;align-items:center;flex-shrink:0;}
+.btn-icon{background:transparent;border:none;cursor:pointer;color:var(--color-text-secondary);display:flex;align-items:center;gap:3px;font-size:12px;font-family:'Sora',sans-serif;padding:6px 7px;border-radius:10px;white-space:nowrap;}
+.btn-icon:hover{background:var(--color-background-secondary);}
+.btn-icon-label{font-size:11px;font-weight:600;}
+.btn-primary{width:100%;padding:1rem;background:#4f8ef7;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;}
+.btn-primary:active{opacity:0.85;}
+
+/* ストリーク */
+.streak-card{background:linear-gradient(135deg,#1a3a6b 0%,#2d5dd6 60%,#4f8ef7 100%);border-radius:20px;padding:1.25rem 1.5rem;margin-bottom:1rem;color:#fff;display:flex;align-items:center;justify-content:space-between;}
+.streak-num{font-size:44px;font-weight:700;letter-spacing:-2px;font-family:'DM Mono',monospace;line-height:1;}
+.streak-label{font-size:12px;opacity:0.75;margin-top:3px;}
+.streak-best-label{font-size:11px;opacity:0.65;margin-bottom:2px;}
+.streak-best-num{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;}
+.streak-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;margin-top:8px;}
+.streak-badge.done{background:rgba(255,255,255,0.2);}
+.streak-badge.pending{background:rgba(255,80,50,0.4);}
+
+/* AI */
+.home-ai-card{border-radius:18px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;gap:12px;align-items:flex-start;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);}
+.home-ai-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4f8ef7,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.home-ai-body{flex:1;min-width:0;}
+.home-ai-name{font-size:11px;font-weight:600;color:#4f8ef7;margin-bottom:5px;}
+.home-ai-text{font-size:13.5px;color:var(--color-text-primary);line-height:1.65;}
+.ai-loading{display:flex;gap:4px;align-items:center;padding:4px 0;}
+.ai-loading span{width:6px;height:6px;border-radius:50%;background:#4f8ef7;animation:bounce 1s infinite;}
+.ai-loading span:nth-child(2){animation-delay:0.15s;}
+.ai-loading span:nth-child(3){animation-delay:0.3s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
+
+/* 習得グラフ */
+.mastery-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:18px;padding:1rem 1.25rem;margin-bottom:1rem;}
+.mastery-title{font-size:11px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:space-between;}
+.mastery-total{font-size:11px;color:var(--color-text-secondary);font-family:'DM Mono',monospace;font-weight:400;}
+.mastery-bars{display:flex;gap:6px;align-items:flex-end;height:60px;margin-bottom:8px;}
+.mastery-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.mastery-bar-track{width:100%;background:var(--color-background-secondary);border-radius:6px;overflow:hidden;position:relative;flex:1;}
+.mastery-bar-fill{position:absolute;bottom:0;left:0;right:0;border-radius:6px;transition:height 0.6s ease;}
+.mastery-bar-val{font-size:10px;font-weight:600;color:var(--color-text-primary);font-family:'DM Mono',monospace;}
+.mastery-bar-lbl{font-size:10px;color:var(--color-text-tertiary);}
+.mastery-goal{margin-top:8px;padding-top:8px;border-top:0.5px solid var(--color-border-tertiary);}
+.mastery-goal-bar-track{height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden;margin-top:4px;}
+.mastery-goal-bar-fill{height:100%;background:linear-gradient(90deg,#4f8ef7,#7c3aed);border-radius:3px;transition:width 0.6s ease;}
+.mastery-goal-label{font-size:11px;color:var(--color-text-secondary);display:flex;justify-content:space-between;}
+
+/* デッキカード */
+.deck-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;padding:1rem 1.25rem;margin-bottom:10px;cursor:pointer;transition:transform 0.1s,border-color 0.15s;}
+.deck-card:active{transform:scale(0.98);}
+.deck-card:hover{border-color:var(--color-border-secondary);}
+.deck-card.pinned{border-color:#b5c8f8;background:linear-gradient(180deg,rgba(79,142,247,0.08),var(--color-background-primary) 42%);}
+.deck-card-main{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.deck-card-info{flex:1;min-width:0;}
+.deck-actions{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.deck-action-btn{min-width:34px;height:30px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:700;font-family:'Sora',sans-serif;padding:0 8px;}
+.deck-action-btn:disabled{opacity:0.28;cursor:default;}
+.deck-action-btn.pinned{background:#e8f0fe;border-color:#b5c8f8;color:#2d5dd6;}
+.deck-pin-label{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:#2d5dd6;margin-right:6px;}
+.deck-name{font-size:15px;font-weight:600;color:var(--color-text-primary);margin-bottom:3px;}
+.deck-meta{font-size:12px;color:var(--color-text-secondary);}
+
+/* デッキ詳細 */
+.deck-detail-header{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:18px;padding:1.25rem;margin-bottom:1rem;}
+.deck-detail-name{font-size:20px;font-weight:700;color:var(--color-text-primary);margin-bottom:4px;}
+.deck-detail-meta{font-size:13px;color:var(--color-text-secondary);margin-bottom:1rem;}
+.deck-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.deck-stat-box{background:var(--color-background-secondary);border-radius:12px;padding:0.75rem;text-align:center;}
+.deck-stat-val{font-size:22px;font-weight:700;color:var(--color-text-primary);font-family:'DM Mono',monospace;}
+.deck-stat-label{font-size:11px;color:var(--color-text-secondary);margin-top:2px;}
+
+/* スタートオプション */
+.start-options{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:18px;padding:1.25rem;margin-bottom:1rem;}
+.start-options-title{font-size:12px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;margin-bottom:1rem;}
+.chunk-selector{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
+.chunk-btn{font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;color:var(--color-text-secondary);font-family:'Sora',sans-serif;transition:all 0.15s;}
+.chunk-btn.active{background:#4f8ef7;color:#fff;border-color:#4f8ef7;}
+
+/* ── 開始位置スライダー ── */
+.start-pos-section{margin-bottom:1rem;}
+.start-pos-label{font-size:12px;color:var(--color-text-secondary);font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.start-pos-num{font-family:'DM Mono',monospace;font-size:13px;color:#4f8ef7;font-weight:700;}
+.start-pos-input-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:6px;}
+.start-pos-input{height:46px;border:1px solid var(--color-border-secondary);border-radius:12px;background:var(--color-background-primary);color:var(--color-text-primary);font-size:18px;font-weight:700;font-family:'DM Mono',monospace;text-align:center;padding:0 10px;}
+.start-pos-input-suffix{font-size:12px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap;}
+.start-pos-help{font-size:11px;color:var(--color-text-tertiary);line-height:1.45;}
+.start-pos-section.disabled .start-pos-input{pointer-events:none;}
+
+.shuffle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;padding:0.85rem 1rem;background:var(--color-background-secondary);border:0.5px solid transparent;border-radius:12px;cursor:pointer;transition:background 0.15s,border-color 0.15s,box-shadow 0.15s;}
+.shuffle-row.is-on{background:#e8f0fe;border-color:#b5c8f8;box-shadow:0 0 0 2px rgba(79,142,247,0.08);}
+.shuffle-row.is-on .shuffle-label{color:#2d5dd6;}
+.shuffle-label{font-size:13px;font-weight:600;color:var(--color-text-primary);display:flex;align-items:center;gap:6px;}
+.toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#d0d5dd;border:1px solid #b8c0cc;border-radius:12px;cursor:pointer;transition:background 0.2s,border-color 0.2s;}
+.toggle-slider::before{content:'';position:absolute;height:18px;width:18px;left:2px;top:2px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(16,24,40,0.25);transition:transform 0.2s;}
+.toggle-switch input:checked+.toggle-slider{background:#4f8ef7;}
+.toggle-switch input:checked+.toggle-slider::before{transform:translateX(20px);}
+.range-info{font-size:12px;color:var(--color-text-secondary);background:var(--color-background-secondary);border-radius:10px;padding:8px 12px;margin-bottom:1rem;font-family:'DM Mono',monospace;text-align:center;}
+.start-btns{display:flex;flex-direction:column;gap:8px;}
+.start-btn-auto{padding:0.85rem;background:#f0f4ff;border:0.5px solid #b5c8f8;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;color:#3b5fcf;font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;}
+.start-btn-retry{padding:0.85rem;background:#fff8f0;border:0.5px solid #f5c1a0;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;color:#c95c10;font-family:'Sora',sans-serif;}
+
+/* 単語リスト */
+.word-list-section{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;overflow:hidden;}
+.word-list-filter{display:flex;gap:6px;padding:0.75rem 1rem;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);overflow-x:auto;scrollbar-width:none;}
+.word-list-filter::-webkit-scrollbar{display:none;}
+.wl-filter-btn{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;color:var(--color-text-secondary);font-family:'Sora',sans-serif;white-space:nowrap;}
+.wl-filter-btn.active{background:#4f8ef7;color:#fff;border-color:#4f8ef7;}
+.word-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+.word-table th{text-align:left;font-size:10px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;padding:8px 10px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.word-table td{padding:9px 10px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle;}
+.word-table tr:last-child td{border-bottom:none;}
+.word-table tr:hover td{background:var(--color-background-secondary);}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;}
+.s-mastered{background:#e6f4ea;color:#1a7a3c;}.s-wrong{background:#fff0e8;color:#c95c10;}.s-untouched{background:var(--color-background-secondary);color:var(--color-text-tertiary);}
+
+/* 学習画面 */
+.progress-bar-wrap{height:4px;background:var(--color-border-tertiary);border-radius:2px;margin-bottom:1.25rem;overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:2px;transition:width 0.25s;}
+.flash-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:22px;height:260px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:52px;margin-bottom:1rem;position:relative;overflow:hidden;text-align:center;}
+.card-front-text{font-size:46px;font-weight:700;color:var(--color-text-primary);letter-spacing:-1px;line-height:1.1;padding:0 1.5rem;width:100%;}
+.card-divider{width:calc(100% - 3rem);height:0.5px;background:var(--color-border-tertiary);margin:1rem 1.5rem;opacity:0;transition:opacity 0.2s;flex-shrink:0;}
+.flash-card.revealed .card-divider{opacity:1;}
+.card-back-text{font-size:26px;font-weight:500;color:var(--color-text-secondary);padding:0 1.25rem;visibility:hidden;opacity:0;transition:opacity 0.2s 0.05s;line-height:1.3;width:100%;}
+.flash-card.revealed .card-back-text{visibility:visible;opacity:1;}
+.answer-buttons{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1rem;}
+.btn-wrong{padding:1.2rem;background:#fff0f0;border:0.5px solid #f5c1c1;border-radius:16px;font-size:28px;cursor:pointer;transition:transform 0.1s,opacity 0.2s;color:#c0392b;}
+.btn-correct{padding:1.2rem;background:#f0fbf4;border:0.5px solid #9fe1b8;border-radius:16px;font-size:28px;cursor:pointer;transition:transform 0.1s,opacity 0.2s;color:#1a7a3c;}
+.btn-wrong:active{transform:scale(0.95);}.btn-correct:active{transform:scale(0.95);}
+.answer-buttons.pre-reveal .btn-wrong,.answer-buttons.pre-reveal .btn-correct{opacity:0.35;}
+.answer-buttons.locked .btn-wrong,.answer-buttons.locked .btn-correct{pointer-events:none;opacity:0.5;}
+.answer-buttons.locked.correct .btn-correct{opacity:1;box-shadow:0 0 0 3px rgba(26,122,60,0.18);}
+.answer-buttons.locked.wrong .btn-wrong{opacity:1;box-shadow:0 0 0 3px rgba(192,57,43,0.18);}
+.btn-next-wrong{display:none;width:100%;padding:1rem;background:#c0392b;color:#fff;border:none;border-radius:16px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:1rem;}
+.btn-next-wrong.show{display:block;}
+.mode-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:1rem;}
+.mode-chip.all{background:#e8f0fe;color:#2d5dd6;}.mode-chip.retry{background:#fff0e8;color:#c95c10;}.mode-chip.auto{background:#f0f4ff;color:#3b5fcf;}
+.study-top-actions{display:flex;gap:8px;margin-bottom:0;}
+.btn-redo-top{flex:1;padding:0.7rem;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--color-text-secondary);font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;}
+
+/* フルオート */
+.auto-flash-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:22px;height:260px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:52px;margin-bottom:1.5rem;position:relative;overflow:hidden;cursor:pointer;text-align:center;}
+.auto-front-text{font-size:46px;font-weight:700;color:var(--color-text-primary);letter-spacing:-1px;line-height:1.1;padding:0 1.5rem;width:100%;}
+.auto-divider{width:calc(100% - 3rem);height:0.5px;background:var(--color-border-tertiary);margin:1rem 1.5rem;opacity:0;transition:opacity 0.2s;flex-shrink:0;}
+.auto-flash-card.revealed .auto-divider{opacity:1;}
+.auto-back-text{font-size:26px;font-weight:500;color:var(--color-text-secondary);padding:0 1.25rem;visibility:hidden;opacity:0;transition:opacity 0.2s 0.05s;line-height:1.3;width:100%;}
+.auto-flash-card.revealed .auto-back-text{visibility:visible;opacity:1;}
+.auto-miss-flash{position:absolute;inset:0;border-radius:22px;background:rgba(192,57,43,0.12);border:2px solid #f5c1c1;opacity:0;pointer-events:none;transition:opacity 0.05s;}
+.auto-miss-flash.show{opacity:1;}
+.auto-hint{text-align:center;font-size:12px;color:var(--color-text-tertiary);margin-bottom:1rem;display:flex;align-items:center;justify-content:center;gap:6px;}
+.auto-progress-track{height:3px;background:var(--color-border-tertiary);border-radius:2px;margin-bottom:1.5rem;overflow:hidden;}
+.auto-progress-fill{height:100%;background:#4f8ef7;border-radius:2px;}
+.phase-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin:0 2px;}
+.phase-dot.active{background:#4f8ef7;}.phase-dot.inactive{background:var(--color-border-tertiary);}
+
+/* ── 結果画面コンパクト ── */
+.result-wrap{padding:0.75rem 0 2rem;}
+
+/* 上部アクション */
+.result-nav-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.result-top-actions{display:flex;gap:8px;margin-bottom:1rem;}
+
+.result-nav-actions .btn-home,.result-top-actions .btn-primary, .result-top-actions .start-btn-retry{flex:1;padding:0.6rem;font-size:13px;border-radius:12px;}
+
+/* 成績バナー：1行にコンパクト */
+.result-banner{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:18px;padding:1rem 1.25rem;margin-bottom:1rem;text-align:center;}
+.result-banner-top{display:none;}
+.result-banner-emoji{font-size:32px;}
+.result-banner-title{font-size:18px;font-weight:700;color:var(--color-text-primary);}
+/* 1行に4項目 */
+.result-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.result-stat-item{background:var(--color-background-secondary);border-radius:10px;padding:8px 4px;text-align:center;}
+.result-stat-val{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--color-text-primary);line-height:1;}
+.result-stat-label{font-size:10px;color:var(--color-text-secondary);margin-top:3px;}
+
+/* スピードカード（コンパクト） */
+.speed-card{border-radius:14px;padding:0.85rem 1.25rem;margin-bottom:1rem;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff;display:flex;align-items:center;gap:12px;}
+.speed-rank{font-size:36px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;flex-shrink:0;}
+.speed-rank.S{color:#ffd700;text-shadow:0 0 16px rgba(255,215,0,0.6);}
+.speed-rank.A{color:#c0f0a0;}.speed-rank.B{color:#a0d0ff;}.speed-rank.C{color:#ffb0a0;}.speed-rank.D{color:#aaa;}
+.speed-info{flex:1;}
+.speed-label-row{font-size:10px;opacity:0.6;margin-bottom:4px;}
+.speed-nums{display:flex;gap:10px;}
+.speed-num-item{text-align:center;}
+.speed-num-val{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
+.speed-num-label{font-size:9px;opacity:0.6;}
+.speed-badge-new{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.2);margin-left:auto;align-self:flex-start;flex-shrink:0;}
+
+/* AIコメント（コンパクト） */
+.ai-comment-card{background:var(--color-background-secondary);border-radius:14px;padding:0.85rem 1rem;margin-bottom:1rem;display:flex;gap:10px;align-items:flex-start;}
+.ai-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4f8ef7,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.ai-bubble{flex:1;}.ai-name{font-size:10px;font-weight:600;color:#4f8ef7;margin-bottom:3px;}
+.ai-text{font-size:12px;color:var(--color-text-primary);line-height:1.5;}
+
+/* 今回の単語テーブル（コンパクト） */
+.mini-hist-wrap{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:14px;overflow:hidden;margin-bottom:1rem;}
+.mini-hist-table{width:100%;border-collapse:collapse;font-size:12px;}
+.mini-hist-table th{padding:7px 8px;text-align:left;font-size:10px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);}
+.mini-hist-table td{padding:7px 8px;border-bottom:0.5px solid var(--color-border-tertiary);vertical-align:middle;}
+.mini-hist-table tr:last-child td{border-bottom:none;}
+.dot-row{display:flex;gap:2px;}
+.dot{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.dot-ok{background:#e6f4ea;color:#1a7a3c;}.dot-ng{background:#fff0e8;color:#c0392b;}
+.sec-cell{font-family:'DM Mono',monospace;font-size:11px;color:var(--color-text-tertiary);}
+.sec-cell.fast{color:#1a7a3c;font-weight:600;}.sec-cell.slow{color:#c95c10;}
+.result-bottom-actions{display:flex;flex-direction:column;gap:8px;}
+.btn-home{padding:0.85rem;background:transparent;border:0.5px solid var(--color-border-secondary);border-radius:14px;font-size:14px;cursor:pointer;color:var(--color-text-secondary);font-family:'Sora',sans-serif;}
+
+/* 振り返り */
+.review-section{margin-bottom:1.5rem;}
+.review-section-title{font-size:11px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;margin-bottom:0.75rem;}
+.review-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem;}
+.review-stat{background:var(--color-background-secondary);border-radius:12px;padding:0.85rem;text-align:center;}
+.review-stat-val{font-size:24px;font-weight:700;}
+.review-stat-label{font-size:11px;color:var(--color-text-secondary);margin-top:2px;}
+.day-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.day-bar-label{font-size:11px;color:var(--color-text-secondary);width:30px;text-align:right;font-family:'DM Mono',monospace;}
+.day-bar-track{flex:1;height:8px;background:var(--color-border-tertiary);border-radius:4px;overflow:hidden;}
+.day-bar-fill{height:100%;border-radius:4px;}
+.day-bar-num{font-size:11px;color:var(--color-text-tertiary);width:26px;font-family:'DM Mono',monospace;}
+.weak-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:10px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);margin:3px;color:var(--color-text-primary);}
+.detail-hist-wrap{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;overflow:hidden;}
+.detail-hist-table{width:100%;border-collapse:collapse;font-size:12px;}
+.detail-hist-table th{padding:8px;text-align:left;font-size:10px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);white-space:nowrap;}
+.detail-hist-table td{padding:9px 8px;border-bottom:0.5px solid var(--color-border-tertiary);vertical-align:middle;}
+.detail-hist-table tr:last-child td{border-bottom:none;}
+.detail-hist-table tr:hover td{background:var(--color-background-secondary);}
+.dh-word{font-weight:700;font-size:13px;color:var(--color-text-primary);}
+.dh-meaning{font-size:11px;color:var(--color-text-secondary);margin-top:1px;}
+.dh-attempts{display:flex;gap:2px;flex-wrap:wrap;}
+.dh-dot{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.dh-dot.ok{background:#e6f4ea;color:#1a7a3c;}.dh-dot.ng{background:#fff0e8;color:#c0392b;}
+.dh-dot.today-dot{outline:2px solid #4f8ef7;outline-offset:1px;}
+.dh-streak{font-size:11px;font-family:'DM Mono',monospace;}
+.dh-streak.good{color:#1a7a3c;font-weight:600;}.dh-streak.bad{color:#c0392b;}.dh-streak.mid{color:#c95c10;}
+.dh-avg{font-family:'DM Mono',monospace;font-size:11px;color:var(--color-text-tertiary);}
+.dh-avg.fast{color:#1a7a3c;font-weight:600;}.dh-avg.slow{color:#c95c10;}
+.deck-filter-row{display:flex;gap:6px;overflow-x:auto;margin-bottom:1rem;scrollbar-width:none;padding-bottom:2px;}
+.deck-filter-row::-webkit-scrollbar{display:none;}
+.deck-filter-btn{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;color:var(--color-text-secondary);font-family:'Sora',sans-serif;white-space:nowrap;}
+.deck-filter-btn.active{background:#4f8ef7;color:#fff;border-color:#4f8ef7;}
+
+/* モーダル */
+.modal-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--color-background-primary);border-radius:24px 24px 0 0;padding:1.5rem 1.25rem 2rem;width:100%;border-top:0.5px solid var(--color-border-secondary);}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:1.25rem;color:var(--color-text-primary);}
+.modal label{font-size:13px;color:var(--color-text-secondary);display:block;margin-bottom:4px;}
+.modal input,.modal textarea{width:100%;margin-bottom:12px;font-family:'Sora',sans-serif;font-size:15px;background:var(--color-background-secondary);color:var(--color-text-primary);border:none;border-radius:12px;padding:10px 14px;outline:none;}
+.modal textarea{height:120px;resize:none;}
+.modal-hint{font-size:12px;color:var(--color-text-tertiary);margin-bottom:14px;}
+.modal-actions{display:flex;gap:10px;}
+.btn-cancel{flex:1;padding:0.9rem;background:var(--color-background-secondary);border:none;border-radius:14px;font-size:14px;cursor:pointer;color:var(--color-text-secondary);font-family:'Sora',sans-serif;}
+.btn-save{flex:2;padding:0.9rem;background:#4f8ef7;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;}
+.settings-section{background:#f6f8fb;border:0.5px solid #e1e6ef;border-radius:14px;padding:1rem 1.25rem;margin-bottom:1rem;}
+.settings-title{font-size:14px;font-weight:700;color:#172033;margin-bottom:4px;}
+.settings-desc{font-size:11px;color:#667085;line-height:1.45;margin-bottom:12px;}
+.settings-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;}
+.settings-label{font-size:12px;font-weight:600;color:#475467;white-space:nowrap;}
+.settings-val{font-size:13px;font-weight:700;color:#172033;min-width:46px;text-align:right;font-family:'DM Mono',monospace;}
+.settings-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+input[type=range]{accent-color:#4f8ef7;flex:1;}
+
+/* 1000単語達成 */
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+@keyframes milestoneIn{0%{transform:scale(0.5);opacity:0;}60%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+.milestone-overlay{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);}
+.milestone-overlay.show{display:flex;}
+.milestone-box{background:var(--color-background-primary);border-radius:24px;padding:2rem 1.5rem;text-align:center;max-width:320px;width:90%;animation:milestoneIn 0.5s ease forwards;}
+.milestone-emoji{font-size:64px;margin-bottom:0.5rem;}
+.milestone-title{font-size:22px;font-weight:700;color:var(--color-text-primary);margin-bottom:0.5rem;}
+.milestone-sub{font-size:14px;color:var(--color-text-secondary);margin-bottom:1.5rem;line-height:1.6;}
+.confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;animation:confettiFall linear forwards;pointer-events:none;}
+@keyframes rankIn{0%{transform:scale(0.5) rotate(-10deg);opacity:0;}70%{transform:scale(1.1) rotate(2deg);}100%{transform:scale(1) rotate(0);opacity:1;}}
+.rank-anim{animation:rankIn 0.5s ease forwards;}
+</style>
+
+<div id="app">
+
+<!-- ホーム -->
+<div id="home-screen" class="screen active">
+  <div class="topbar">
+    <div class="logo">flash<span>go</span></div>
+    <div class="topbar-right">
+      <button class="btn-icon" id="btn-open-review"><i class="ti ti-calendar-stats" style="font-size:16px;"></i><span class="btn-icon-label">振り返り</span></button>
+      <button class="btn-icon" id="btn-open-settings"><i class="ti ti-settings" style="font-size:16px;"></i><span class="btn-icon-label">設定</span></button>
+      <button class="btn-icon" id="btn-add-deck" style="color:#4f8ef7;font-weight:600;"><i class="ti ti-plus" style="font-size:16px;"></i><span class="btn-icon-label">追加</span></button>
+    </div>
+  </div>
+  <div class="streak-card">
+    <div>
+      <div id="streak-fire" style="font-size:34px;line-height:1;margin-bottom:2px;">🔥</div>
+      <div class="streak-num" id="streak-num">0</div>
+      <div class="streak-label">日連続学習中</div>
+      <div class="streak-badge" id="streak-badge"><span id="streak-badge-text">今日まだ</span></div>
+    </div>
+    <div style="text-align:right;">
+      <div class="streak-best-label">🏆 最長記録</div>
+      <div class="streak-best-num" id="streak-best">0日</div>
+    </div>
+  </div>
+  <div class="home-ai-card">
+    <div class="home-ai-avatar">🤖</div>
+    <div class="home-ai-body">
+      <div class="home-ai-name">flashgo AI</div>
+      <div class="home-ai-text" id="home-ai-text"><div class="ai-loading"><span></span><span></span><span></span></div></div>
+    </div>
+  </div>
+  <div class="mastery-card">
+    <div class="mastery-title"><span><i class="ti ti-chart-bar" style="font-size:12px;margin-right:5px;vertical-align:-1px;"></i>習得グラフ</span><span class="mastery-total" id="mastery-total-label">全0単語</span></div>
+    <div class="mastery-bars" id="mastery-bars"></div>
+    <div class="mastery-goal">
+      <div class="mastery-goal-label"><span>🎯 5回正解を1000単語達成</span><span id="mastery-goal-count">0 / 1000</span></div>
+      <div class="mastery-goal-bar-track"><div class="mastery-goal-bar-fill" id="mastery-goal-bar" style="width:0%;"></div></div>
+    </div>
+  </div>
+  <div id="deck-list"></div>
+  <p id="empty-msg" style="text-align:center;color:var(--color-text-tertiary);font-size:14px;padding:2rem 0;display:none;">デッキがまだありません。</p>
+</div>
+
+<!-- デッキ詳細 -->
+<div id="deck-detail-screen" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" id="btn-detail-back"><i class="ti ti-arrow-left"></i> 戻る</button>
+    <span style="font-size:14px;font-weight:600;color:var(--color-text-primary);" id="detail-screen-title"></span>
+    <span style="width:60px;"></span>
+  </div>
+  <div class="deck-detail-header">
+    <div class="deck-detail-name" id="detail-deck-name"></div>
+    <div class="deck-detail-meta" id="detail-deck-meta"></div>
+    <div class="deck-stat-row">
+      <div class="deck-stat-box"><div class="deck-stat-val" id="detail-stat-total">0</div><div class="deck-stat-label">全枚数</div></div>
+      <div class="deck-stat-box"><div class="deck-stat-val" id="detail-stat-mastered" style="color:#1a7a3c;">0</div><div class="deck-stat-label">習得済</div></div>
+      <div class="deck-stat-box"><div class="deck-stat-val" id="detail-stat-wrong" style="color:#c0392b;">0</div><div class="deck-stat-label">要復習</div></div>
+    </div>
+  </div>
+  <div class="start-options">
+    <div class="start-options-title">学習設定</div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;font-weight:600;">📦 枚数を分ける</div>
+      <div class="chunk-selector" id="chunk-selector"></div>
+    </div>
+
+    
+
+    <!-- ── 開始位置 ── -->
+    <div class="start-pos-section" id="start-pos-section">
+      <div class="start-pos-label">
+        <span>📍 開始位置</span>
+        <span class="start-pos-num" id="start-pos-display">1番から</span>
+      </div>
+      <div class="start-pos-input-row">
+        <input type="number" class="start-pos-input" id="start-pos-input" min="1" value="1" inputmode="numeric" />
+        <span class="start-pos-input-suffix" id="start-pos-max-label">/ 200番</span>
+      </div>
+      <div class="start-pos-help">始めたい単語番号を入力してください。</div>
+    </div>
+
+    <div class="shuffle-row">
+      <div class="shuffle-label"><i class="ti ti-arrows-shuffle" style="font-size:15px;"></i> シャッフル</div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="shuffle-toggle" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+<div class="shuffle-row">
+      <div class="shuffle-label"><i class="ti ti-volume" style="font-size:15px;"></i> 読み上げ</div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="detail-speech-toggle">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="range-info" id="range-info">全 0 枚を学習</div>
+    <div class="start-btns">
+      <button class="btn-primary" id="btn-start-normal">▶ 通常モードで開始</button>
+      <button class="start-btn-auto" id="btn-start-auto"><i class="ti ti-player-play" style="font-size:14px;"></i> フルオートで開始</button>
+      <button class="start-btn-retry" id="btn-start-retry" style="display:none;"></button>
+    </div>
+  </div>
+  <div style="margin-bottom:0.75rem;font-size:12px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;">単語一覧</div>
+  <div class="word-list-section">
+    <div class="word-list-filter" id="wl-filter-bar">
+      <button class="wl-filter-btn active" data-filter="all">すべて</button>
+      <button class="wl-filter-btn" data-filter="mastered">習得済 ✓</button>
+      <button class="wl-filter-btn" data-filter="wrong">要復習 ✕</button>
+      <button class="wl-filter-btn" data-filter="untouched">未学習</button>
+    </div>
+    <table class="word-table"><thead><tr><th style="width:5%;color:var(--color-text-tertiary);">#</th><th style="width:35%;">単語</th><th style="width:40%;">意味</th><th style="width:20%;">状態</th></tr></thead><tbody id="detail-word-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- 通常学習 -->
+<div id="study-screen" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" id="btn-to-home"><i class="ti ti-arrow-left"></i> 戻る</button>
+    <span id="study-deck-name" style="font-size:14px;font-weight:600;color:var(--color-text-primary);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+    <span id="study-counter" style="font-size:13px;font-family:'DM Mono',monospace;color:var(--color-text-secondary);"></span>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="background:#4f8ef7;"></div></div>
+  <div id="mode-chip-wrap"></div>
+  <div class="flash-card" id="flash-card">
+    <div class="card-front-text" id="card-front"></div>
+    <div class="card-divider"></div>
+    <div class="card-back-text" id="card-back"></div>
+  </div>
+  <div class="answer-buttons pre-reveal" id="answer-buttons">
+    <button class="btn-wrong" id="btn-wrong">✕</button>
+    <button class="btn-correct" id="btn-correct">〇</button>
+  </div>
+  <button class="btn-next-wrong" id="btn-next-wrong">確認したので次へ</button>
+  <div class="study-top-actions">
+    <button class="btn-redo-top" id="btn-redo-study"><i class="ti ti-refresh" style="font-size:14px;"></i> やり直す</button>
+  </div>
+</div>
+
+<!-- フルオート -->
+<div id="auto-screen" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" id="btn-auto-home"><i class="ti ti-arrow-left"></i> 戻る</button>
+    <span id="auto-deck-name" style="font-size:14px;font-weight:600;color:var(--color-text-primary);"></span>
+    <span id="auto-counter" style="font-size:13px;font-family:'DM Mono',monospace;color:var(--color-text-secondary);"></span>
+  </div>
+  <div class="mode-chip auto"><i class="ti ti-player-play" style="font-size:13px;"></i> フルオートモード</div>
+  <div class="auto-progress-track"><div class="auto-progress-fill" id="auto-prog-fill" style="width:0%;"></div></div>
+  <div class="auto-hint"><i class="ti ti-hand-click" style="font-size:14px;"></i><span>✕ だと思ったら画面をタップ</span></div>
+  <div style="position:relative;" id="auto-card-wrap">
+    <div class="auto-flash-card" id="auto-flash-card">
+      <div class="auto-front-text" id="auto-front"></div>
+      <div class="auto-divider"></div>
+      <div class="auto-back-text" id="auto-back"></div>
+    </div>
+    <div class="auto-miss-flash" id="auto-miss-flash"></div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:6px;margin-bottom:1rem;" id="phase-dots"></div>
+  <div style="text-align:center;"><button class="btn-icon" id="btn-auto-pause" style="margin:0 auto;gap:6px;font-size:14px;"><i class="ti ti-player-pause" style="font-size:16px;"></i> 一時停止</button></div>
+</div>
+
+<!-- 結果（コンパクト） -->
+<div id="result-screen" class="screen">
+  <div class="result-wrap">
+    <div class="result-nav-actions">
+      <button class="btn-home" id="btn-result-back">戻る</button>
+      <button class="btn-home" id="btn-result-home">ホームへ</button>
+    </div>
+    <!-- 上部：もう一度 / 再挑戦 -->
+    <div class="result-top-actions">
+      <button class="btn-primary" id="btn-restart-all">もう一度</button>
+      <button class="start-btn-retry" id="btn-retry-wrong" style="display:none;flex:1;"></button>
+    </div>
+
+    <!-- 成績バナー（コンパクト） -->
+    <div class="result-banner">
+      <div class="result-banner-top">
+        <span class="result-banner-emoji" id="result-emoji">🎉</span>
+        <span class="result-banner-title" id="result-title">セッション完了！</span>
+      </div>
+      <div class="result-stats-row">
+        <div class="result-stat-item"><div class="result-stat-val" id="stat-correct" style="color:#1a7a3c;">0</div><div class="result-stat-label">正解</div></div>
+        <div class="result-stat-item"><div class="result-stat-val" id="stat-wrong" style="color:#c0392b;">0</div><div class="result-stat-label">不正解</div></div>
+        <div class="result-stat-item"><div class="result-stat-val" id="stat-total">0</div><div class="result-stat-label">合計</div></div>
+        <div class="result-stat-item"><div class="result-stat-val" id="stat-rate" style="color:#4f8ef7;">0%</div><div class="result-stat-label">正解率</div></div>
+      </div>
+    </div>
+
+    <!-- スピード（コンパクト横並び） -->
+    <div class="speed-card">
+      <div class="speed-rank" id="speed-rank">—</div>
+      <div class="speed-info">
+        <div class="speed-label-row">SPEED RANK — <span id="speed-rank-label">—</span></div>
+        <div class="speed-nums">
+          <div class="speed-num-item"><div class="speed-num-val" id="speed-total">—</div><div class="speed-num-label">合計</div></div>
+          <div class="speed-num-item"><div class="speed-num-val" id="speed-avg">—</div><div class="speed-num-label">平均/枚</div></div>
+          <div class="speed-num-item"><div class="speed-num-val" id="speed-best">—</div><div class="speed-num-label">自己ベスト</div></div>
+        </div>
+      </div>
+      <div id="speed-badge-new" class="speed-badge-new" style="display:none;">✨ NEW!</div>
+    </div>
+
+    <!-- AI（コンパクト） -->
+    <div class="ai-comment-card">
+      <div class="ai-avatar">🤖</div>
+      <div class="ai-bubble"><div class="ai-name">flashgo AI</div><div class="ai-text" id="ai-comment-text"><div class="ai-loading"><span></span><span></span><span></span></div></div></div>
+    </div>
+
+    <!-- 今回の単語 -->
+    <div style="font-size:11px;font-weight:600;color:var(--color-text-tertiary);letter-spacing:1px;text-transform:uppercase;margin-bottom:0.5rem;"><i class="ti ti-list-check" style="font-size:12px;margin-right:4px;vertical-align:-1px;"></i>今回の単語</div>
+    <div class="mini-hist-wrap">
+      <table class="mini-hist-table">
+        <thead><tr><th style="width:28%;">単語</th><th style="width:28%;">意味</th><th style="width:28%;">履歴</th><th style="width:16%;">秒</th></tr></thead>
+        <tbody id="mini-hist-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 振り返り -->
+<div id="review-screen" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" id="btn-review-back"><i class="ti ti-arrow-left"></i> 戻る</button>
+    <span style="font-size:15px;font-weight:700;color:var(--color-text-primary);">今日の振り返り</span>
+    <span id="review-date" style="font-size:12px;color:var(--color-text-secondary);font-family:'DM Mono',monospace;"></span>
+  </div>
+  <div class="review-stat-grid">
+    <div class="review-stat"><div class="review-stat-val" id="rv-total" style="color:#4f8ef7;">0</div><div class="review-stat-label">今日の枚数</div></div>
+    <div class="review-stat"><div class="review-stat-val" id="rv-correct" style="color:#1a7a3c;">0</div><div class="review-stat-label">〇 正解</div></div>
+    <div class="review-stat"><div class="review-stat-val" id="rv-wrong" style="color:#c0392b;">0</div><div class="review-stat-label">✕ 不正解</div></div>
+  </div>
+  <div class="review-section">
+    <div style="background:var(--color-background-secondary);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-size:13px;color:var(--color-text-secondary);">今日の正解率</span><span id="rv-rate-label" style="font-size:16px;font-weight:700;color:#4f8ef7;">—</span></div>
+      <div style="height:8px;background:var(--color-border-tertiary);border-radius:4px;overflow:hidden;"><div id="rv-rate-bar" style="height:100%;background:#4f8ef7;border-radius:4px;width:0%;transition:width 0.6s;"></div></div>
+    </div>
+  </div>
+  <div class="review-section"><div class="review-section-title">過去7日間</div><div id="week-bars"></div></div>
+  <div class="review-section">
+    <div class="review-section-title"><i class="ti ti-history" style="font-size:12px;margin-right:5px;vertical-align:-1px;"></i>単語別 挑戦履歴</div>
+    <div class="deck-filter-row" id="deck-filter-row"></div>
+    <div class="detail-hist-wrap" id="detail-hist-wrap">
+      <table class="detail-hist-table"><thead><tr><th style="width:28%;">単語/意味</th><th style="width:42%;">履歴</th><th style="width:16%;">連続</th><th style="width:14%;">平均秒</th></tr></thead><tbody id="detail-hist-tbody"></tbody></table>
+    </div>
+    <p id="detail-hist-empty" style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:1.5rem;display:none;">まだ学習データがありません。</p>
+  </div>
+  <div class="review-section">
+    <div class="review-section-title">苦手単語</div>
+    <div id="rv-weak-wrap" style="display:flex;flex-wrap:wrap;"></div>
+    <p id="rv-weak-empty" style="font-size:13px;color:var(--color-text-tertiary);display:none;">苦手な単語はありません 🎉</p>
+  </div>
+</div>
+</div>
+
+<div class="milestone-overlay" id="milestone-overlay">
+  <div class="milestone-box">
+    <div class="milestone-emoji">🏆</div>
+    <div class="milestone-title">1000単語マスター！</div>
+    <div class="milestone-sub">5回以上正解した単語が<br><strong>1000単語</strong>を突破しました！</div>
+    <button class="btn-primary" id="btn-milestone-close" style="max-width:200px;margin:0 auto;">やったー！</button>
+  </div>
+</div>
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <h3>新しいデッキを作成</h3>
+    <label>デッキ名</label><input type="text" id="deck-name-input" placeholder="例：英単語 TOEIC Level 5" />
+    <label>表面のラベル（省略可）</label><input type="text" id="front-label-input" placeholder="英語" />
+    <label>裏面のラベル（省略可）</label><input type="text" id="back-label-input" placeholder="日本語" />
+    <label>単語（1行=1枚、「表,裏」形式）</label>
+    <textarea id="cards-input" placeholder="apple, りんご&#10;banana, バナナ"></textarea>
+    <p class="modal-hint">コンマかコロンで区切ってください。</p>
+    <div class="modal-actions"><button class="btn-cancel" id="btn-cancel-modal">キャンセル</button><button class="btn-save" id="btn-save-deck">保存する</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h3>設定</h3>
+    <div class="settings-section">
+      <p class="settings-title">答えが出るまでの時間</p>
+      <p class="settings-desc">単語を表示してから、日本語の答えを出すまでの待ち時間です。</p>
+      <div class="settings-row"><span class="settings-label">待機時間</span><input type="range" id="reveal-delay-slider" min="0" max="30" step="1" value="10" /><span class="settings-val" id="reveal-delay-val">1.0秒</span></div>
+    </div>
+    <div class="settings-section">
+      <p class="settings-title">フルオートの次へ進む時間</p>
+      <p class="settings-desc">答えが出たあと、次のカードへ進むまでの待ち時間です。</p>
+      <div class="settings-row"><span class="settings-label">待機時間</span><input type="range" id="auto-next-slider" min="1" max="30" step="1" value="10" /><span class="settings-val" id="auto-next-val">1.0秒</span></div>
+    </div>
+    <div class="settings-section">
+      <p class="settings-title">正解後に次へ進む時間</p>
+      <p class="settings-desc">通常モードで〇を押したあと、次のカードへ進むまでの待ち時間です。</p>
+      <div class="settings-row"><span class="settings-label">待機時間</span><input type="range" id="correct-next-slider" min="2" max="30" step="1" value="10" /><span class="settings-val" id="correct-next-val">1.0秒</span></div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-toggle-row" style="margin-bottom:12px;">
+        <div>
+          <p class="settings-title" style="margin-bottom:2px;">単語の読み上げ</p>
+          <p class="settings-desc" style="margin-bottom:0;">カードが出た時に英単語を音声で読み上げます。</p>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="speech-toggle" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-row"><span class="settings-label">速さ</span><input type="range" id="speech-rate-slider" min="5" max="16" step="1" value="10" /><span class="settings-val" id="speech-rate-val">1.0x</span></div>
+    </div>
+    <div class="modal-actions" style="margin-top:4px;"><button class="btn-save" id="btn-close-settings" style="flex:1;">完了</button></div>
+  </div>
+</div>
+
+<script>
+const EX1_200=[{f:"vulnerable",b:"傷つきやすい"},{f:"heed",b:"〜に気をつける"},{f:"bystander",b:"傍観者、見物人"},{f:"congestion",b:"混雑"},{f:"discard",b:"〜を捨てる"},{f:"blaze",b:"炎、火災"},{f:"clumsy",b:"不器用な"},{f:"eliminate",b:"〜を取り除く"},{f:"acknowledge",b:"〜を認める"},{f:"edible",b:"食べられる"},{f:"cultivate",b:"〜を耕す"},{f:"overdue",b:"期限が過ぎた"},{f:"enrollment",b:"登録、入学"},{f:"enlist",b:"〜を得る、求める"},{f:"anarchy",b:"無政府状態"},{f:"reluctant",b:"気乗りがしない"},{f:"fragile",b:"壊れやすい"},{f:"evaluate",b:"〜を評価する"},{f:"resume",b:"〜を再開する"},{f:"weary",b:"ひどく疲れた"},{f:"custody",b:"保護、親権"},{f:"coalition",b:"連立、連合"},{f:"tranquil",b:"静かな、穏やかな"},{f:"enforce",b:"〜を施行する"},{f:"disguise",b:"〜を偽装する"},{f:"surplus",b:"余剰"},{f:"petition",b:"嘆願書"},{f:"habitual",b:"常習的な"},{f:"vacant",b:"空いている"},{f:"daring",b:"大胆な"},{f:"thrive",b:"繁栄する"},{f:"compartment",b:"区画"},{f:"accelerate",b:"〜を加速させる"},{f:"descendant",b:"子孫"},{f:"decay",b:"腐る"},{f:"refine",b:"〜を洗練する"},{f:"swell",b:"腫れる"},{f:"segment",b:"部分、区分"},{f:"bribe",b:"賄賂"},{f:"obsessed",b:"心を奪われた"},{f:"uphold",b:"〜を守る"},{f:"overthrow",b:"〜を転覆させる"},{f:"itinerary",b:"旅程"},{f:"faint",b:"かすかな"},{f:"explicit",b:"明白な"},{f:"lenient",b:"寛大な"},{f:"contemplate",b:"〜を熟考する"},{f:"presume",b:"〜と推定する"},{f:"bulky",b:"かさばった"},{f:"concede",b:"敗北を認める"},{f:"shrug",b:"肩をすくめる"},{f:"reconstruct",b:"〜を再現する"},{f:"barricade",b:"バリケード"},{f:"extravagant",b:"浪費する"},{f:"reconcile",b:"〜を和解させる"},{f:"exempt",b:"免除された"},{f:"stroll",b:"散歩する"},{f:"notorious",b:"悪名高い"},{f:"enhance",b:"〜を高める"},{f:"signify",b:"〜を示す"},{f:"hectic",b:"慌ただしい"},{f:"vivid",b:"生き生きとした"},{f:"intact",b:"損なわれていない"},{f:"conform",b:"従う"},{f:"sway",b:"揺れる"},{f:"hasty",b:"急ぎの"},{f:"rotate",b:"交替する"},{f:"decisive",b:"決定的な"},{f:"trivial",b:"ささいな"},{f:"detain",b:"〜を引き留める"},{f:"vicious",b:"凶暴な"},{f:"revolve",b:"回転する"},{f:"summon",b:"〜を呼び出す"},{f:"corrupt",b:"堕落した"},{f:"spontaneous",b:"自発的な"},{f:"stale",b:"新鮮でない"},{f:"proclaim",b:"〜を宣言する"},{f:"cherish",b:"〜を大事にする"},{f:"fictitious",b:"虚構の"},{f:"rash",b:"軽率な"},{f:"serene",b:"静かな、穏やかな"},{f:"ransom",b:"身代金"},{f:"witty",b:"機知のある"},{f:"thaw",b:"解ける"},{f:"adequate",b:"十分な"},{f:"minor",b:"あまり重要でない"},{f:"obstacle",b:"障害"},{f:"mandatory",b:"義務的な"},{f:"nutritious",b:"栄養のある"},{f:"impractical",b:"現実的でない"},{f:"optimistic",b:"楽観的な"},{f:"perspective",b:"観点、見方"},{f:"tackle",b:"取り組む"},{f:"merit",b:"実績、長所"},{f:"halt",b:"止まる"},{f:"designate",b:"〜を指定する"},{f:"bankrupt",b:"破産した"},{f:"abundant",b:"豊富な"},{f:"exceptional",b:"特にすぐれた"},{f:"integrate",b:"〜を統合する"},{f:"assess",b:"〜を評価する"},{f:"raid",b:"〜を急襲する"},{f:"betray",b:"〜を裏切る"},{f:"altitude",b:"高さ"},{f:"offset",b:"〜を相殺する"},{f:"discontent",b:"不満"},{f:"inefficient",b:"効率の悪い"},{f:"unanimously",b:"満場一致で"},{f:"prestigious",b:"有名な"},{f:"complication",b:"複雑な問題"},{f:"milestone",b:"画期的な出来事"},{f:"portray",b:"〜を描写する"},{f:"fatality",b:"死亡者数"},{f:"tempting",b:"魅力的な"},{f:"inmate",b:"囚人"},{f:"detour",b:"回り道"},{f:"dedicated",b:"献身的な"},{f:"relic",b:"遺物"},{f:"compulsory",b:"義務的な"},{f:"dehydration",b:"脱水"},{f:"liberate",b:"〜を解放する"},{f:"perilous",b:"危険な"},{f:"biographical",b:"伝記の"},{f:"filthy",b:"汚い"},{f:"accord",b:"合意、協定"},{f:"binding",b:"拘束力のある"},{f:"comply",b:"従う"},{f:"stunned",b:"あぜんとした"},{f:"invalid",b:"無効の"},{f:"intruder",b:"侵入者"},{f:"unveil",b:"〜を初公開する"},{f:"tedious",b:"退屈な"},{f:"clarify",b:"〜を明らかにする"},{f:"commend",b:"〜を称賛する"},{f:"intrigued",b:"興味をそそられた"},{f:"wither",b:"枯れる"},{f:"escort",b:"〜を護衛する"},{f:"scarcity",b:"不足、欠乏"},{f:"precision",b:"正確さ"},{f:"gulp",b:"〜をがぶ飲みする"},{f:"interrogate",b:"〜を尋問する"},{f:"composed",b:"落ち着いた"},{f:"vocation",b:"天職"},{f:"correlation",b:"相関関係"},{f:"obsolete",b:"時代遅れの"},{f:"skeptical",b:"懐疑的な"},{f:"unwittingly",b:"故意でなく"},{f:"abridged",b:"短縮された"},{f:"irresistible",b:"非常に魅力的な"},{f:"correspondence",b:"文通、通信"},{f:"destined",b:"運命づけられた"},{f:"perish",b:"死ぬ、滅びる"},{f:"expire",b:"期限が切れる"},{f:"spacious",b:"広々とした"},{f:"transmit",b:"〜を伝染させる"},{f:"encounter",b:"〜に遭遇する"},{f:"conventional",b:"従来の"},{f:"lease",b:"賃貸借契約"},{f:"division",b:"分断"},{f:"strain",b:"負担、重圧"},{f:"administer",b:"〜を施行する"},{f:"notify",b:"〜に通知する"},{f:"transplant",b:"〜を移植する"},{f:"certify",b:"〜を証明する"},{f:"assumption",b:"仮定"},{f:"provoke",b:"〜を引き起こす"},{f:"literacy",b:"読み書きの能力"},{f:"retreat",b:"撤退する"},{f:"novelty",b:"目新しさ"},{f:"exclusive",b:"排他的な"},{f:"mimic",b:"〜をまねる"},{f:"resent",b:"〜に憤慨する"},{f:"prejudice",b:"偏見"},{f:"seize",b:"〜をつかむ"},{f:"divine",b:"神の"},{f:"incorporate",b:"〜を組み込む"},{f:"surpass",b:"〜を超える"},{f:"impulse",b:"衝動"},{f:"biased",b:"偏見を抱いた"},{f:"barren",b:"不毛の"},{f:"inflict",b:"〜を与える"},{f:"blockade",b:"封鎖"},{f:"clutch",b:"〜をつかむ"},{f:"refuge",b:"避難所"},{f:"demote",b:"〜を降格する"},{f:"fragrant",b:"香りのよい"},{f:"mingle",b:"交際する"},{f:"temperament",b:"気質"},{f:"stubborn",b:"頑固な"},{f:"unfold",b:"展開する"},{f:"formulate",b:"〜を策定する"},{f:"contemporary",b:"現代の"},{f:"redundant",b:"冗長な"},{f:"obstruct",b:"〜を妨げる"},{f:"guardian",b:"保護者"},{f:"token",b:"印、証拠"},{f:"omit",b:"省略する"},{f:"conclusive",b:"決定的な"},{f:"obedient",b:"従順な"},{f:"sacred",b:"神聖な"}];
+
+const PASTAN_PRE1=[{"f":"last","b":"続く、持続する、(天候・体力・食品などが)持ちこたえる"},{"f":"affect","b":"に影響を及ぼす；を感動させる"},{"f":"claim","b":"と主張する；を（自分のものとして）要求する"},{"f":"ship","b":"を出荷する、を輸送する"},{"f":"issue","b":"問題（点）；発行（物）；発表"},{"f":"purchase","b":"を購入する"},{"f":"occur","b":"起こる；心に浮かぶ；現れる"},{"f":"deal","b":"を処理する；を商う；を分配する"},{"f":"consume","b":"を消費する；を食べる，飲む"},{"f":"present","b":"を提示する、を進呈する"},{"f":"fire","b":"を解雇する、を首にする"},{"f":"regard","b":"を見なす；を見る；を評価する"},{"f":"fine","b":"に罰金を科す"},{"f":"transfer","b":"を移す；を伝える；移る；乗り換える"},{"f":"decline","b":"減少する；衰退する；を断る"},{"f":"eliminate","b":"を取り除く"},{"f":"indicate","b":"を指し示す；を述べる"},{"f":"ensure","b":"を確実にする（≒make sure）；を守る"},{"f":"expand","b":"（を）拡大する；（を）詳説する"},{"f":"address","b":"（問題など）に対処する；に演説する；（手紙など）を（～宛てに）出す（to）"},{"f":"identify","b":"を特定する；を（～と）同一視する（with）"},{"f":"construct","b":"を建設する（＝build）；を構成する"},{"f":"invest","b":"（を）投資する；に（～を）与える（with）"},{"f":"obtain","b":"を得る"},{"f":"struggle","b":"闘い；懸命の努力"},{"f":"counter","b":"～と反論する、～に反対する"},{"f":"associate","b":"を結び付けて考える；（～と）交際する（with）"},{"f":"register","b":"を記録する，登録する；（～に）登録する（for）"},{"f":"reveal","b":"を明らかにする；を見せる"},{"f":"species","b":"（生物の）種；種類"},{"f":"diet","b":"(日常の)食べ物、療養食"},{"f":"site","b":"用地，場所；跡地；（ウェブ）サイト"},{"f":"cell","b":"細胞；独房；電池"},{"f":"facility","b":"施設，設備；機能；才能"},{"f":"practice","b":"実践，実行；（社会の）慣習；練習"},{"f":"resident","b":"居住者；滞在者"},{"f":"option","b":"選択（の自由）；選択肢"},{"f":"organ","b":"器官，臓器；組織；（パイプ）オルガン"},{"f":"critic","b":"批判する人、批評家"},{"f":"region","b":"地域；領域；部位"},{"f":"tax","b":"税金、税"},{"f":"access","b":"利用，入手；接近（の機会・方法・権利）"},{"f":"virus","b":"ウイルス；（感染症の）病原体"},{"f":"bill","b":"請求書；【英】勘定書（≒【米】check）；法案"},{"f":"evidence","b":"証拠"},{"f":"attempt","b":"を試みる，企てる"},{"f":"account","b":"説明；勘定；口座"},{"f":"theory","b":"学説；理論；原理；推測"},{"f":"factor","b":"要因、要素"},{"f":"stock","b":"在庫品；蓄え；株"},{"f":"chemical","b":"化学の，化学的な"},{"f":"media","b":"マスメディア、マスコミ"},{"f":"income","b":"収入；所得"},{"f":"supply","b":"を供給する"},{"f":"shortage","b":"不足、欠如"},{"f":"poverty","b":"貧困、欠乏"},{"f":"criminal","b":"犯人、犯罪者"},{"f":"budget","b":"予算；経費"},{"f":"authority","b":"〔通例 the ～ties〕（関係）当局；権威；権限"},{"f":"genome","b":"ゲノム"},{"f":"atmosphere","b":"〔the ～〕大気；雰囲気"},{"f":"aid","b":"を援助する，助ける（≒help）"},{"f":"measure","b":"措置、程度、基準"},{"f":"subject","b":"話題；科目；主題；被験者"},{"f":"decade","b":"10年間"},{"f":"weapon","b":"兵器，武器（≒arms）"},{"f":"nutrient","b":"栄養分、栄養になるもの"},{"f":"expense","b":"〔～s〕経費；費用；犠牲"},{"f":"structure","b":"構造；体系；構造物"},{"f":"adolescent","b":"青年"},{"f":"procedure","b":"手順、手続き"},{"f":"minimum","b":"最小限度"},{"f":"fuel","b":"燃料；勢いを増加させるもの"},{"f":"resource","b":"〔通例～s〕資源；〔通例～s〕資金；才覚"},{"f":"regulation","b":"規則、規制"},{"f":"contract","b":"契約（書）；協定"},{"f":"insurance","b":"保険；保険料；保険金"},{"f":"employment","b":"雇用、職"},{"f":"ban","b":"を（法的に）禁止する；を締め出す"},{"f":"vehicle","b":"車、(特に陸上の)乗り物、輸送機関、伝達手段"},{"f":"soil","b":"土地，土壌；（悪事などの）温床"},{"f":"cargo","b":"(主に船・飛行機の)積荷、貨物"},{"f":"aircraft","b":"航空機、飛行機"},{"f":"current","b":"現在の；現代の；通用している"},{"f":"political","b":"政治（上）の"},{"f":"significant","b":"重要な，重大な；意義深い"},{"f":"effective","b":"効果的な、有効な"},{"f":"military","b":"軍の，軍事（用）の"},{"f":"due","b":"予定された；（支払）期日で；しかるべき"},{"f":"essential","b":"（～に）必要不可欠な（to/for）；本質的な"},{"f":"illegal","b":"違法の、非合法の"},{"f":"immune","b":"（～に対して）免疫を持つ（to）；（～を）免れた（from）"},{"f":"numerous","b":"非常に数の多い"},{"f":"extreme","b":"極端な；極度の，過激な"},{"f":"general","b":"全体の、一般的な"},{"f":"agricultural","b":"農業の、農耕の"},{"f":"overall","b":"総合的な；全体的な"},{"f":"additional","b":"追加の、付加的な"},{"f":"entire","b":"全体の，全部の（≒whole）；完全な"},{"f":"severe","b":"（人・規律・事態・天気などが）厳しい；猛烈な"},{"f":"alter","b":"を変える；変わる（≒change）"},{"f":"adopt","b":"を採用する；（態度など）をとる；を養子にする"},{"f":"vote","b":"投票；投票結果；〔the ～〕選挙権"},{"f":"determine","b":"を決定する；を正確に知る"},{"f":"enable","b":"（人）が...できるようにする；を可能にする"},{"f":"conduct","b":"（調査・実験など）を実施する；を導く"},{"f":"direct","b":"を案内する、を指揮する"},{"f":"absorb","b":"を吸収する；を併合する；を夢中にさせる"},{"f":"imply","b":"を暗に意味する；を必然的に伴う"},{"f":"operate","b":"を操作する；機能する；手術する"},{"f":"demonstrate","b":"を論証［証明］する；デモをする"},{"f":"boost","b":"を押し上げる；を増加させる"},{"f":"prove","b":"を証明する；判明する，わかる"},{"f":"monitor","b":"を監視する；を傍受する"},{"f":"defeat","b":"を負かす（≒beat）；を失敗させる"},{"f":"protest","b":"（に）抗議する；を主張する"},{"f":"target","b":"（到達・攻撃）目標；的"},{"f":"preserve","b":"を保存する；を保持する；を保護する"},{"f":"oppose","b":"に反対する；を対抗［対比］させる"},{"f":"migrate","b":"移住する；（鳥などが）渡る"},{"f":"analyze","b":"を分析する"},{"f":"discourage","b":"（人）にやる気をなくさせる；を落胆させる"},{"f":"confirm","b":"を確認する；を裏づける"},{"f":"intend","b":"を意図する"},{"f":"predict","b":"を予言［予測］する"},{"f":"extend","b":"を伸［延］ばす；伸びる；及ぶ"},{"f":"figure","b":"数字；姿；人物；図表"},{"f":"transportation","b":"交通[輸送]機関、輸送"},{"f":"institution","b":"機関；協会；施設；制度"},{"f":"theft","b":"窃盗（罪）"},{"f":"candidate","b":"（～の）候補（者）（for）；志願者"},{"f":"mammal","b":"哺乳動物"},{"f":"economist","b":"経済学者"},{"f":"protein","b":"たんぱく質"},{"f":"immigrant","b":"(外国からの)移住者、移民"},{"f":"property","b":"不動産、財産、特性"},{"f":"fund","b":"〔しばしば～s〕基金，資金"},{"f":"habitat","b":"生息地；（人の）居住地"},{"f":"symptom","b":"症状；兆候（≒sign）"},{"f":"eruption","b":"勃発、噴火"},{"f":"quantity","b":"量；分量"},{"f":"ad","b":"広告"},{"f":"saving","b":"節約、倹約、預金(額)、蓄え"},{"f":"territory","b":"領土；（活動の）領域；（動物の）テリトリー"},{"f":"threat","b":"脅威；（悪い）兆し；脅迫"},{"f":"sufferer","b":"苦しむ人、被災者、病人"},{"f":"emission","b":"排気、放出(物)"},{"f":"executive","b":"重役、幹部、経営者"},{"f":"strategy","b":"戦略"},{"f":"riot","b":"暴動"},{"f":"district","b":"地区；行政区"},{"f":"election","b":"選挙"},{"f":"medication","b":"(医師が処方した)薬、医薬品、薬物治療"},{"f":"breed","b":"を繁殖させる，育てる；繁殖する"},{"f":"conflict","b":"争い；論争；不一致"},{"f":"productivity","b":"生産性"},{"f":"organism","b":"有機体、生物"},{"f":"representative","b":"代表者、代理人"},{"f":"warehouse","b":"倉庫"},{"f":"refund","b":"返金、払い戻し(金)"},{"f":"tuition","b":"【主に米】 授業料；（個人）指導"},{"f":"range","b":"範囲、領域"},{"f":"victim","b":"犠牲（者），被害者"},{"f":"dose","b":"（薬の1回分の）服用量；放射線の1回の照射量"},{"f":"mainland","b":"本土"},{"f":"waterfall","b":"滝"},{"f":"satellite","b":"人工衛星、衛星"},{"f":"evolution","b":"進化、発展、展開"},{"f":"prey","b":"獲物；犠牲者"},{"f":"bystander","b":"傍観者"},{"f":"creature","b":"生き物、(特に人以外の)動物"},{"f":"civilization","b":"文明"},{"f":"tribe","b":"部族；仲間"},{"f":"permission","b":"許可、承認"},{"f":"barrier","b":"（～に対する）障壁（against/to）；防壁"},{"f":"wage","b":"賃金、給料"},{"f":"drone","b":"ドローン、(無線操作の)無人機"},{"f":"appearance","b":"外観、出現"},{"f":"embassy","b":"大使館；大使一行"},{"f":"skeleton","b":"骨格；骨組み；概略"},{"f":"wildlife","b":"野生生物"},{"f":"potential","b":"潜在的な；可能性を秘めた"},{"f":"limited","b":"限定された、わずかの"},{"f":"rural","b":"田舎の（⇔urban），田園の"},{"f":"advanced","b":"進歩した、前進した、上級の"},{"f":"beneficial","b":"有益な、有利な"},{"f":"genetic","b":"遺伝子の"},{"f":"radical","b":"急進的な；根本的な"},{"f":"hostile","b":"敵意のある（⇔friendly 友好的な）"},{"f":"fit","b":"健康な、元気な、ふさわしい"},{"f":"long-term","b":"長期にわたる、長期的な"},{"f":"Arctic","b":"北極の"},{"f":"minor","b":"重要でない；小さい"},{"f":"risky","b":"危険な"},{"f":"complex","b":"複雑な、複合(体)の"},{"f":"competitive","b":"競争力のある、格安の、競争の"},{"f":"immediate","b":"即座の；当面の；すぐそばの；直接の"},{"f":"religious","b":"宗教(上)の、信仰があつい"},{"f":"related","b":"関連した、関係のある"},{"f":"affordable","b":"手頃な、安価な"},{"f":"donate","b":"を寄付する；（臓器・血液）を提供する"},{"f":"lessen","b":"を減らす"},{"f":"manufacture","b":"を製造する；をでっち上げる"},{"f":"commute","b":"通勤［通学］する"},{"f":"exaggerate","b":"（を）誇張する；を強調する"},{"f":"suspect","b":"ではないかと思う；（人）を疑う"},{"f":"acquire","b":"を得る；を習得する"},{"f":"reintroduce","b":"(動植物など)をかつての分布域に再導入する、(制度など)を復活させる"},{"f":"reschedule","b":"の日時を変更する"},{"f":"adapt","b":"適応する；を（～に）適合させる（to）"},{"f":"generate","b":"を生み出す；（電気など）を発生させる"},{"f":"guarantee","b":"を保証する"},{"f":"dump","b":"を投棄する；をどさっと落とす"},{"f":"update","b":"を最新のものにする；をアップデートする"},{"f":"classify","b":"を分類する；を機密扱いにする"},{"f":"acknowledge","b":"（事実など）を認める（≒admit, accept）；に謝意を表す"},{"f":"enforce","b":"を施行［実施］する；を（～に）強制する（on/upon）"},{"f":"renew","b":"を更新する；（資源）を再生する"},{"f":"overlook","b":"を見落とす；を大目に見る；を見渡す"},{"f":"evaluate","b":"を評価する；を査定する"},{"f":"commit","b":"献身する；（罪など）を犯す；を投入する"},{"f":"argument","b":"議論、口論"},{"f":"archaeologist","b":"考古学者"},{"f":"reputation","b":"評判；名声"},{"f":"fossil","b":"化石；時代遅れの人［物］"},{"f":"status","b":"地位；状態"},{"f":"contrast","b":"（～との）対照（with/to）"},{"f":"workplace","b":"職場"},{"f":"equality","b":"平等"},{"f":"colleague","b":"（職場の）同僚"},{"f":"assistance","b":"援助、支援"},{"f":"luxury","b":"ぜいたく（品）；〔形容詞的に〕豪華な"},{"f":"outbreak","b":"発生，勃発"},{"f":"council","b":"（地方）議会；評議会；（公の）会議"},{"f":"pottery","b":"陶器類、焼き物類"},{"f":"assignment","b":"任務、宿題、割り当て"},{"f":"particle","b":"（微）粒子；ほんのわずか"},{"f":"radiation","b":"放射能，放射線"},{"f":"priority","b":"優先（事項）"},{"f":"content","b":"内容，中身；コンテンツ"},{"f":"destination","b":"(旅行などの)目的地、行き先"},{"f":"mine","b":"鉱山、地雷"},{"f":"injury","b":"傷害、けが"},{"f":"lottery","b":"宝くじ、抽選"},{"f":"feature","b":"特徴、特集記事"},{"f":"labor","b":"労働、労働力"},{"f":"diabetes","b":"糖尿病"},{"f":"bulb","b":"電球、球根"},{"f":"résumé","b":"履歴書[≒CV]、要約"},{"f":"mud","b":"ぬかるみ、泥"},{"f":"psychology","b":"心理学；心理（状態）"},{"f":"corporation","b":"（大）企業；法人"},{"f":"ecosystem","b":"生態系"},{"f":"promotion","b":"昇進、促進、販売促進"},{"f":"administration","b":"管理（部）；行政；政府（機関）"},{"f":"complaint","b":"苦情、不平"},{"f":"debt","b":"借金，負債；恩義"},{"f":"requirement","b":"必要条件、必需品"},{"f":"workforce","b":"労働人口，総労働力；全従業員（数）"},{"f":"preference","b":"他より好むこと、好み"},{"f":"refugee","b":"難民、亡命者"},{"f":"inhabitant","b":"居住者、住民"},{"f":"subscription","b":"予約購読(料)、寄付(金)"},{"f":"recipient","b":"受け取る人；（臓器などの）被提供者"},{"f":"shift","b":"を変える，移す；変わる；移動する"},{"f":"vessel","b":"船舶；容器；（体液が通る）脈管"},{"f":"ingredient","b":"材料，成分；（成功の）要因"},{"f":"qualified","b":"有能な、資格のある、適任の"},{"f":"widespread","b":"広範囲にわたる；広く普及した"},{"f":"alternative","b":"代替の、どちらか一方の"},{"f":"harsh","b":"厳しい；（光・色・味などが）不快な"},{"f":"enormous","b":"莫大な，巨大な"},{"f":"specific","b":"明確な、特定の"},{"f":"artificial","b":"人工の（⇔natural 自然の）；不自然な"},{"f":"toxic","b":"有毒な；中毒性の"},{"f":"flexible","b":"融通の利く，柔軟な"},{"f":"latest","b":"最新の、最近の"},{"f":"former","b":"以前の、元の"},{"f":"capable","b":"能力がある；有能な"},{"f":"practical","b":"実践的な、実際的な"},{"f":"mechanical","b":"機械の；機械的な"},{"f":"federal","b":"連邦（政府）の"},{"f":"aggressive","b":"攻撃的な；意欲的な"},{"f":"adequate","b":"十分な；適切な"},{"f":"unexpected","b":"思いがけない，不意の"},{"f":"attractive","b":"魅力的な"},{"f":"sufficient","b":"十分な（for ～に, to do ～するのに）"},{"f":"costly","b":"費用のかかる、高価な、犠牲[損失、労力]の大きな"},{"f":"eventually","b":"ついに(は)、結局(は)"},{"f":"otherwise","b":"そうでなければ、そのほかの点では"},{"f":"previously","b":"以前に"},{"f":"relatively","b":"比較的(に)、相対的に"},{"f":"consequently","b":"その結果(として)、従って"},{"f":"constantly","b":"絶えず、常に"},{"f":"typically","b":"通常、概して、典型的に"},{"f":"barely","b":"かろうじて、ほとんど～ない"},{"f":"despite","b":"～にもかかわらず"},{"f":"per","b":"～につき、～ごとに"},{"f":"beneath","b":"～の下に[の]"},{"f":"whereas","b":"～するのに（対し），～する一方"},{"f":"post","b":"(インターネットで)(情報・メッセージ)を投稿する、(ビラなど)を張る"},{"f":"reject","b":"を拒否する"},{"f":"consult","b":"（に）相談する；を参照する"},{"f":"obey","b":"に従う；に服従する"},{"f":"engage","b":"を従事させる；を（～として）雇う（as）；（～に）従事する（in/with）"},{"f":"restore","b":"を回復させる；を修復する"},{"f":"colonize","b":"を植民地化する、を入植させる"},{"f":"interact","b":"影響し合う；相互に作用する"},{"f":"inspire","b":"（人）を奮起させる；を喚起する"},{"f":"sue","b":"を告訴する；（～を求めて）訴訟を起こす（for）"},{"f":"estimate","b":"～と推定する、を見積もる"},{"f":"strengthen","b":"を(より)強くする"},{"f":"carve","b":"を彫る；を切り開く；（肉）を切り分ける"},{"f":"convince","b":"を納得［確信］させる"},{"f":"propose","b":"を提案する；をもくろむ；結婚を申し込む"},{"f":"blame","b":"を責める；の責任を負わせる"},{"f":"collapse","b":"崩壊する；（人が）倒れる；を折り畳む"},{"f":"import","b":"を輸入する；を取り込む"},{"f":"load","b":"に積む；に負わせる"},{"f":"pollute","b":"を汚染する"},{"f":"spot","b":"(特定の)場所、斑点、しみ"},{"f":"prescription","b":"処方箋、処方"},{"f":"duty","b":"義務；〔しばしば～ties〕職務；関税"},{"f":"union","b":"組合、統合、団結"},{"f":"concept","b":"概念"},{"f":"root","b":"根本、源、(植物の)根"},{"f":"survival","b":"生き残ること、生き延びること"},{"f":"maintenance","b":"保守、整備、維持"},{"f":"formation","b":"形成；構成（物）；隊列"},{"f":"educator","b":"教育者、教師"},{"f":"kidney","b":"腎臓"},{"f":"nutrition","b":"栄養（の摂取）"},{"f":"brand","b":"ブランド、銘柄"},{"f":"storage","b":"保管、貯蔵(法)、収容力"},{"f":"firm","b":"確固たる；堅固な；安定した"},{"f":"statistics","b":"統計；統計学"},{"f":"toll","b":"損害（の程度）；死傷者数；通行料"},{"f":"tip","b":"助言，秘訣；チップ；先端"},{"f":"CEO","b":"最高経営責任者"},{"f":"circumstance","b":"〔通例～s〕状況，事情；境遇"},{"f":"outsider","b":"部外者、門外漢"},{"f":"reduction","b":"減少、削減"},{"f":"settlement","b":"開拓地、解決、合意"},{"f":"divorce","b":"離婚；分離"},{"f":"likelihood","b":"可能性、見込み"},{"f":"livestock","b":"(牛・羊・豚などの)家畜(類)"},{"f":"possession","b":"所有物、財産、所有"},{"f":"plot","b":"（小説などの）筋；陰謀"},{"f":"category","b":"部類，区分；範疇"},{"f":"welfare","b":"福祉，幸福"},{"f":"moisture","b":"水分；湿気"},{"f":"obesity","b":"（病的な)肥満"},{"f":"grant","b":"（人）に（許可・権利など）を与える；を認める"},{"f":"layer","b":"層"},{"f":"secretary","b":"秘書"},{"f":"anxiety","b":"不安、心配"},{"f":"ownership","b":"所有権、所有者であること"},{"f":"foundation","b":"基礎、基盤"},{"f":"division","b":"不和、分割、部門、仕切り"},{"f":"establishment","b":"設立、制定、組織"},{"f":"conservation","b":"（動植物などの）保護；保存"},{"f":"murder","b":"殺人"},{"f":"presence","b":"存在；出席；面前"},{"f":"paradox","b":"逆説；矛盾"},{"f":"prisoner","b":"囚人"},{"f":"surgeon","b":"外科医"},{"f":"frequency","b":"頻度、しばしば起こること"},{"f":"port","b":"港"},{"f":"reception","b":"反応；宴会；受付；受信（状態）"},{"f":"coworker","b":"同僚、仕事仲間"},{"f":"rust","b":"さび"},{"f":"athletics","b":"スポーツ、運動競技"},{"f":"voyage","b":"(ゆったりした長い)旅、船旅"},{"f":"ecologist","b":"生態学者、環境保護論者"},{"f":"soul","b":"精神；魂，霊魂；生気"},{"f":"isolated","b":"孤立した、孤独な"},{"f":"biased","b":"偏った、偏見を持った"},{"f":"multiple","b":"多様な；種々雑多な"},{"f":"critical","b":"批判的な、重大な"},{"f":"remote","b":"（～から）遠く離れた（from）；かけ離れた"},{"f":"encouraging","b":"勇気づける、望みを持たせる"},{"f":"underground","b":"地下の、秘密の"},{"f":"stable","b":"安定した；動じない"},{"f":"domestic","b":"家庭の；国内の；（動物が）飼いならされた"},{"f":"shallow","b":"浅い（⇔deep 深い）；浅薄な"},{"f":"willing","b":"～するのをいとわない、快く～する"},{"f":"superior","b":"よりすぐれた"},{"f":"profitable","b":"利益になる、有益な"},{"f":"solid","b":"しっかりした；硬い；固体の"},{"f":"tremendous","b":"途方もない，莫大な；すばらしい"},{"f":"intellectual","b":"知的な、知性の"},{"f":"chief","b":"主な、最高位の"},{"f":"steady","b":"着実な，一定の；安定した"},{"f":"evil","b":"邪悪な；有害な"},{"f":"coastal","b":"沿岸(地方)の"},{"f":"dairy","b":"〔集合的に〕乳製品；乳製品加工所［販売者］"},{"f":"digestive","b":"消化の"},{"f":"loyal","b":"（～に）忠実な（to）；誠実な"},{"f":"sensory","b":"感覚の"},{"f":"fancy","b":"（気まぐれな）好み；空想；思いつき"},{"f":"spoil","b":"を台無しにする；を甘やかす；だめになる"},{"f":"stimulate","b":"を刺激する"},{"f":"distract","b":"（注意など）をそらす"},{"f":"bargain","b":"買い得品；取引；契約"},{"f":"emerge","b":"明らかになる、現れる"},{"f":"browse","b":"（を）拾い読みする；（を）閲覧する；（商品など）を見て歩く"},{"f":"define","b":"を定義する、を明確に示す"},{"f":"adjust","b":"を調整する；を適合させる；順応する"},{"f":"deserve","b":"に値する"},{"f":"undergo","b":"を経験する；（手術など）を受ける；に耐える"},{"f":"contradict","b":"と矛盾する；に反対意見を言う"},{"f":"withdraw","b":"を引き出す；を撤回する；撤退する"},{"f":"accompany","b":"に同行する；に付随する"},{"f":"infect","b":"(人)を感染させる、を汚染する"},{"f":"rebel","b":"反逆者"},{"f":"convert","b":"を変える；を改宗［転向］させる；を交換する"},{"f":"calculate","b":"を計算する；を予測する"},{"f":"utilize","b":"を利用する（≒make use of）"},{"f":"admit","b":"～と(しぶしぶ)認める、を中に入れる"},{"f":"punish","b":"を罰する；に損傷を与える"},{"f":"approve","b":"賛成する；を承認する"},{"f":"owe","b":"に借りがある；のおかげである"},{"f":"proceed","b":"進む，進行する；（～を）続行する（with）"},{"f":"navigate","b":"（を）誘導する；（を）操縦する；（を）航行する"},{"f":"postpone","b":"を延期する（≒put off）"},{"f":"swallow","b":"（を）飲み込む；をうのみにする；に耐える"},{"f":"tailor","b":"を合わせて作る"},{"f":"overhear","b":"を偶然耳にする"},{"f":"consequence","b":"結果、重要さ"},{"f":"application","b":"申請書、申し込み、適用"},{"f":"workout","b":"運動、(運動競技の)練習"},{"f":"obstacle","b":"（～に対する）障害（物）（to）"},{"f":"treaty","b":"（国家間の）条約；協定"},{"f":"deforestation","b":"森林伐採"},{"f":"infrastructure","b":"基本的施設；（経済）基盤"},{"f":"contribution","b":"貢献、寄付(金)"},{"f":"congestion","b":"混雑"},{"f":"exposure","b":"身をさらすこと、暴露"},{"f":"blow","b":"強打、打撃、災難"},{"f":"participation","b":"参加"},{"f":"crisis","b":"危機、難局"},{"f":"ancestor","b":"先祖、祖先"},{"f":"architect","b":"建築家、設計者"},{"f":"existence","b":"存在、生存"},{"f":"deposit","b":"を置く；を預ける；を堆積させる"},{"f":"finance","b":"金融、財政(学)"},{"f":"awareness","b":"認識、意識"},{"f":"intake","b":"摂取量；受け入れ数；取り入れること"},{"f":"witness","b":"目撃者；証人；証拠，証言"},{"f":"coverage","b":"報道、(保険の)補償範囲、適用範囲"},{"f":"lawsuit","b":"(民事)訴訟"},{"f":"session","b":"集まり；（議会の）会期；（開会中の）議会"},{"f":"means","b":"〔単数・複数扱い〕手段；〔複数扱い〕資力，収入"},{"f":"pioneer","b":"先駆者、草分け、(未開地の)開拓者"},{"f":"satisfaction","b":"満足"},{"f":"basis","b":"根拠、基礎"},{"f":"element","b":"(構成)要素、成分"},{"f":"phenomenon","b":"現象、事象"},{"f":"scale","b":"規模、程度"},{"f":"journal","b":"(専門)雑誌、日刊[週刊]新聞"},{"f":"grain","b":"穀物；粒；きめ"},{"f":"continent","b":"大陸、(イギリスから見て)ヨーロッパ大陸"},{"f":"headquarters","b":"本社、(軍・警察・会社などの)本部"},{"f":"globalization","b":"国際化"},{"f":"brochure","b":"パンフレット、小冊子"},{"f":"inspection","b":"検査、点検"},{"f":"attendance","b":"出席[入場]者数、出席"},{"f":"copper","b":"銅"},{"f":"dozen","b":"12(個)、１ダース"},{"f":"flu","b":"インフルエンザ"},{"f":"burial","b":"埋葬"},{"f":"mold","b":"鋳型；鋳物；性格；かび"},{"f":"patch","b":"（～の）部分，斑点；継ぎ；貼り薬"},{"f":"diagram","b":"図(表)"},{"f":"placement","b":"(就職先・学校・里親などの)斡旋、配置"},{"f":"shame","b":"恥；残念なこと"},{"f":"wheelchair","b":"車椅子"},{"f":"experienced","b":"熟練した"},{"f":"initial","b":"初めの"},{"f":"mainstream","b":"（活動・思潮などの）主流；大勢"},{"f":"appropriate","b":"適切な"},{"f":"fake","b":"偽の；見せかけだけの"},{"f":"alert","b":"警戒して；敏速な"},{"f":"fatal","b":"致命的な、破滅的な"},{"f":"nutritious","b":"栄養になる"},{"f":"sophisticated","b":"高性能の，精巧な；洗練された"},{"f":"automatic","b":"自動の"},{"f":"raw","b":"生の；未加工の"},{"f":"slight","b":"わずかな；取るに足らない"},{"f":"man-made","b":"(物質などが)合成の、人工の"},{"f":"aging","b":"高齢化が進む、老朽化している"},{"f":"spiritual","b":"精神の（⇔material）；霊的な"},{"f":"endangered","b":"(動植物が)絶滅の危機にある"},{"f":"sticky","b":"ねばねばの、粘着性の"},{"f":"fertile","b":"肥沃な（⇔barren 不毛の）；多産の"},{"f":"elsewhere","b":"どこかほかのところへ[に、へ]"},{"f":"altogether","b":"完全に"},{"f":"strictly","b":"厳格に、厳しく"},{"f":"beforehand","b":"前もって、あらかじめ"},{"f":"likewise","b":"同様に（≒in the same way）"},{"f":"detect","b":"を感知する；を見つけ出す；に気づく"},{"f":"combat","b":"戦闘；対立"},{"f":"pose","b":"（危険）を引き起こす；（問題など）を提起する；（～を）装う（as）"},{"f":"emphasize","b":"を強調する；を重視する"},{"f":"highlight","b":"を目立たせる，強調する"},{"f":"resist","b":"に抵抗する；〔通例否定文で〕を我慢する"},{"f":"exceed","b":"を超える；に勝る"},{"f":"relocate","b":"(住居・事務所・住民など)を移転[移動]させる"},{"f":"disprove","b":"の誤りを証明する、の反証を挙げる"},{"f":"crawl","b":"はう；ゆっくり進む"},{"f":"foster","b":"をはぐくむ；を養育する；を心に抱く"},{"f":"harass","b":"を絶えず悩ます、を苦しめる"},{"f":"magnify","b":"を拡大する、を誇張する"},{"f":"sneak","b":"こっそり動く"},{"f":"stray","b":"はぐれる，（道に）迷う"},{"f":"worsen","b":"を悪化させる；悪化する（≒deteriorate）"},{"f":"advocate","b":"を主張する；を擁護する"},{"f":"evacuate","b":"を避難させる、から立ち退く"},{"f":"verify","b":"の正しさを証明［確認］する"},{"f":"abuse","b":"乱用；虐待"},{"f":"scatter","b":"をまき散らす；分散する"},{"f":"endorse","b":"を推奨する"},{"f":"modify","b":"を修正する；を緩和する"},{"f":"penetrate","b":"（に）浸透する；（に）進出する；（を）貫く；（を）見抜く"},{"f":"conform","b":"順応する；一致する"},{"f":"leave","b":"休暇"},{"f":"tissue","b":"（生物の）組織"},{"f":"gut","b":"腸、消化管、内臓"},{"f":"lightning","b":"雷、稲妻"},{"f":"camel","b":"ラクダ、黄褐色"},{"f":"antioxidant","b":"抗酸化物質、酸化防止剤"},{"f":"disorder","b":"障害，（心身の）不調；混乱"},{"f":"cattle","b":"〔集合的に〕牛"},{"f":"oath","b":"誓い、誓約"},{"f":"monument","b":"記念碑，遺跡；金字塔"},{"f":"heating","b":"暖房(装置)"},{"f":"germ","b":"細菌、病原菌"},{"f":"legend","b":"伝説、言い伝え、伝説的な人物"},{"f":"auditorium","b":"(学校の)講堂、公会堂"},{"f":"therapy","b":"療法；心理療法"},{"f":"heritage","b":"遺産"},{"f":"invasion","b":"侵害、侵入"},{"f":"instruction","b":"(製品の)使用書、指示、教育"},{"f":"extinction","b":"(家系・種などの)絶滅、消滅"},{"f":"creativity","b":"創造性、独創性"},{"f":"plantation","b":"(熱帯・亜熱帯の)(大)農園"},{"f":"drought","b":"干ばつ；（慢性的な）不足"},{"f":"wealth","b":"財産、富、豊富"},{"f":"reminder","b":"思い出させるもの、記念物[品]"},{"f":"inquiry","b":"問い合わせ、質問、調査"},{"f":"investigation","b":"(詳しい)調査、研究"},{"f":"boundary","b":"境界（線）；〔通例～ries〕限界"},{"f":"compartment","b":"(列車・客室などの仕切った)区画[部屋]"},{"f":"substitute","b":"を代わりに使う；（～の）代理をする（for）"},{"f":"hybrid","b":"雑種の；混成の"},{"f":"characteristic","b":"特徴"},{"f":"routine","b":"決まり切った仕事；いつもの手順"},{"f":"edge","b":"優勢、刃、端"},{"f":"incident","b":"出来事，事件；紛争"},{"f":"clue","b":"（～の）手がかり（to/about）；（パズルの）ヒント"},{"f":"removal","b":"除去、移動"},{"f":"outcome","b":"結果"},{"f":"altitude","b":"高度，標高"},{"f":"closure","b":"(工場・学校などの)閉鎖"},{"f":"compound","b":"を悪化させる；を合成する；を混合する"},{"f":"surplus","b":"余剰（⇔shortage 不足），過剰；黒字"},{"f":"vaccine","b":"ワクチン"},{"f":"reference","b":"言及、参照"},{"f":"obligation","b":"義務、責任"},{"f":"ritual","b":"儀式；（日常の）習慣的行為"},{"f":"mean","b":"意地の悪い、不親切な"},{"f":"coral","b":"サンゴ(製)の"},{"f":"novel","b":"斬新な、目新しい"},{"f":"relevant","b":"関係がある；適切な"},{"f":"efficient","b":"効率的な、有能な"},{"f":"fragile","b":"壊れやすい；虚弱な"},{"f":"impressive","b":"印象的な、感動的な"},{"f":"offensive","b":"不快な、攻撃的な"},{"f":"distinct","b":"明らかに異なる；明瞭な"},{"f":"temporary","b":"一時的な（⇔permanent）"},{"f":"arrogant","b":"横柄な，傲慢な"},{"f":"spacious","b":"広々とした"},{"f":"reasonable","b":"筋の通った、分別のある、(値段などが)手ごろな"},{"f":"substantial","b":"(数量などが)かなりの、重要な、実質的な"},{"f":"disabled","b":"障害のある；障害者用の"},{"f":"straightforward","b":"単純な；率直な"},{"f":"tame","b":"飼いならされた，人に慣れた；退屈な"},{"f":"mandatory","b":"義務的な、強制的な、命令の"},{"f":"edible","b":"食用の，食べられる"},{"f":"outstanding","b":"際立った；未払いの；未解決の"},{"f":"deadly","b":"致命的な、命にかかわる"},{"f":"petty","b":"低級の、心の狭い、取るに足らない"},{"f":"definitely","b":"間違いなく、確かに"},{"f":"roughly","b":"おおよそ、乱暴に"},{"f":"virtually","b":"ほとんど、実質的に"},{"f":"apparently","b":"(真偽のほどはともかく)聞いた[見た]ところでは、どうやら"},{"f":"unfairly","b":"不当に、不公平に"},{"f":"briefly","b":"少しの間に、簡潔に"},{"f":"aside","b":"わきに、別にして、考慮に入れないで"},{"f":"legally","b":"法的に、合法的に"},{"f":"resort","b":"（好ましくない手段に）訴える，頼る（to）"},{"f":"submit","b":"を提出する；（～に）従う（to）"},{"f":"originate","b":"由来する、生じる、始まる"},{"f":"regret","b":"を後悔する、を遺憾に思う"},{"f":"cooperate","b":"協力する"},{"f":"revise","b":"を修正する；を改訂する"},{"f":"restrict","b":"を制限する"},{"f":"occupy","b":"（空間・時間）を占める；を占領する"},{"f":"fade","b":"薄れる；衰える"},{"f":"relieve","b":"を和らげる；〔受身形で〕（...して）安心する（to do）；を解放する"},{"f":"suppress","b":"を抑える；を抑圧する"},{"f":"starve","b":"飢える；（～を）渇望する（for）；を飢えさせる"},{"f":"scratch","b":"を引っかく；を取り消す，削除する"},{"f":"unite","b":"団結する、一体化する"},{"f":"grip","b":"を握る；をとらえる"},{"f":"surrender","b":"を放棄する，引き渡す；（～に）屈する（to）"},{"f":"twist","b":"をねじる，ひねる；を歪曲する"},{"f":"remodel","b":"を改装する、を改造する"},{"f":"triple","b":"３倍になる、を３倍にする"},{"f":"drown","b":"溺死する；を水浸しにする"},{"f":"lean","b":"傾く；寄りかかる；をもたせかける"},{"f":"soak","b":"を浸す；をずぶぬれにする；浸る"},{"f":"hover","b":"(鳥・昆虫・ヘリコプターなどが)空中(の一点)に止まる"},{"f":"interrupt","b":"を中断させる；（の）邪魔をする"},{"f":"socialize","b":"(社会的に)交際する"},{"f":"termite","b":"シロアリ"},{"f":"microbe","b":"微生物；細菌"},{"f":"beverage","b":"（水以外の）飲み物，飲料"},{"f":"paperwork","b":"(必要)書類、書類事務"},{"f":"descendant","b":"子孫"},{"f":"sculpture","b":"彫刻（作品）"},{"f":"handout","b":"(講演・授業などの)配布物、プリント"},{"f":"replacement","b":"交換、交替、代わりの人[もの]"},{"f":"minister","b":"大臣"},{"f":"stream","b":"小川"},{"f":"predator","b":"捕食動物；略奪者"},{"f":"observer","b":"監視員、観察者"},{"f":"commission","b":"代理手数料、歩合、委員会"},{"f":"committee","b":"委員会"},{"f":"junk","b":"がらくた、つまらないもの"},{"f":"departure","b":"出発"},{"f":"description","b":"描写、説明"},{"f":"supervisor","b":"監督者；指導教員"},{"f":"guidance","b":"指導、案内"},{"f":"landscape","b":"眺め、風景、景色"},{"f":"crew","b":"(船の)乗組員、(飛行機・列車などの)乗務員"},{"f":"drain","b":"（液体）を流出させる；（液体が）流れ出る"},{"f":"stereotype","b":"固定観念、ステレオタイプ"},{"f":"edition","b":"(刊行物の)版"},{"f":"graphic","b":"図、挿絵"},{"f":"pathway","b":"小道、細道"},{"f":"reunion","b":"再会（の集い）；再結合"},{"f":"cliff","b":"崖、絶壁"},{"f":"coordinator","b":"コーディネーター、取りまとめ役、責任者"},{"f":"depth","b":"深さ、深み"},{"f":"liver","b":"肝臓"},{"f":"monopoly","b":"独占（権）"},{"f":"usage","b":"（使）用法；語法；習慣"},{"f":"chart","b":"図，グラフ；海図；ヒットチャート"},{"f":"expectancy","b":"期待、見込み"},{"f":"nowhere","b":"どの場所も～ない"},{"f":"courthouse","b":"裁判所(の建物)"},{"f":"cove","b":"入江、小湾"},{"f":"dock","b":"埠頭、波止場、(艦船の)ドック"},{"f":"ministry","b":"省"},{"f":"inflammation","b":"炎症、点火、引火"},{"f":"cholesterol","b":"コレステロール"},{"f":"gender","b":"(社会的・文化的)性別、ジェンダー"},{"f":"depression","b":"うつ病、意気消沈、不景気"},{"f":"stem","b":"（草木の）茎，幹"},{"f":"personnel","b":"〔集合的に〕職員，社員"},{"f":"controversy","b":"論争"},{"f":"recognition","b":"(人・物が)それと分かること、認めること、認識"},{"f":"applicant","b":"応募者、志願者"},{"f":"anthropologist","b":"人類学者"},{"f":"sewage","b":"下水"},{"f":"acceptable","b":"受け入れられる、容認できる"},{"f":"nuclear","b":"原子力利用の、核エネルギーの"},{"f":"moral","b":"道徳(上)の、倫理的な"},{"f":"marine","b":"海の；船舶の"},{"f":"conventional","b":"伝統的な、型にはまった"},{"f":"awful","b":"ひどい；嫌な；ものすごい"},{"f":"consistent","b":"着実な、安定した、首尾一貫した"},{"f":"primitive","b":"原始的な；未開の"},{"f":"mature","b":"成熟した；熟した"},{"f":"unfamiliar","b":"（～に）不慣れな（with）；（～に）（よく）知られていない（to）"},{"f":"impractical","b":"実用的ではない、非現実的な"},{"f":"unpredictable","b":"変わりやすい、予測できない"},{"f":"misleading","b":"誤解させる、紛らわしい"},{"f":"plentiful","b":"豊富な、十分な"},{"f":"Mediterranean","b":"地中海(沿岸地域)の"},{"f":"unsafe","b":"安全でない、危険な"},{"f":"bare","b":"露出した、裸の"},{"f":"feeble","b":"病弱な、(体が)弱々しい"},{"f":"horrible","b":"実にひどい、ぞっとする"},{"f":"scenic","b":"景色の良い"},{"f":"supplementary","b":"補足の、追加の"},{"f":"nosy","b":"詮索好きな、おせっかいな"},{"f":"intermediate","b":"中級の；中間の"},{"f":"universal","b":"(あらゆる人に)共通の、全員の、普遍的な"},{"f":"capture","b":"を捕らえる、を捕虜にする"},{"f":"arise","b":"起こる、出現する"},{"f":"implement","b":"を実行［実施］する"},{"f":"reproduce","b":"を複製する；を繁殖させる；繁殖する"},{"f":"seize","b":"をつかむ；を奪い取る；を没収する"},{"f":"dominate","b":"を支配する、優勢である"},{"f":"complicate","b":"を複雑にする"},{"f":"scan","b":"を走査する；をざっと見る；を注意深く調べる"},{"f":"negotiate","b":"交渉する；を（交渉して）取り決める"},{"f":"illustrate","b":"を説明する、を例示する"},{"f":"encounter","b":"に遭遇する"},{"f":"confine","b":"を限定する；〔通例受身形で〕閉じ込められる"},{"f":"transmit","b":"を伝える；（電波・信号など）を送る"},{"f":"administer","b":"を管理する、を経営する、を治める、(治療)を施す"},{"f":"ease","b":"を和らげる、緩和する"},{"f":"resume","b":"（を）再開する；を取り戻す"},{"f":"pursue","b":"を追跡する、を追求する"},{"f":"decay","b":"腐敗する（≒rot）；（徐々に）衰える"},{"f":"shrink","b":"縮む，縮小する；減少する；ひるむ"},{"f":"cherish","b":"を大切にする；を心に抱く"},{"f":"launch","b":"を売り出す、を開始する、(ロケットなど)を発射する"},{"f":"accommodate","b":"を収容する；を（～に）適応させる（to）"},{"f":"withstand","b":"に耐える"},{"f":"halt","b":"を止める；止まる"},{"f":"transform","b":"を大きく変える"},{"f":"transplant","b":"を移植する；を移住させる"},{"f":"retail","b":"小売り（⇔wholesale 卸売り）"},{"f":"abandon","b":"を捨てる、を放棄する"},{"f":"developer","b":"宅地造成業者、開発者"},{"f":"circulation","b":"循環；流通；（新聞・雑誌の）発行部数"},{"f":"appliance","b":"(特に家庭用の)器具"},{"f":"bond","b":"きずな、債券、契約"},{"f":"circuit","b":"周回すること、回路、巡回"},{"f":"innovation","b":"(技術)革新、新機軸"},{"f":"infant","b":"幼児、乳児"},{"f":"transaction","b":"（商）取引；（人と人との）交流"},{"f":"celebrity","b":"有名人、著名人"},{"f":"checkup","b":"健康診断、検査"},{"f":"makeup","b":"化粧；化粧品；構成；性質"},{"f":"respondent","b":"(調査・アンケートなどの)回答者"},{"f":"well-being","b":"健康、幸福"},{"f":"flaw","b":"欠点、傷、ひび"},{"f":"strain","b":"に負担をかける；を緊張させる；を漉す"},{"f":"rivalry","b":"ライバル意識、競争"},{"f":"publicity","b":"一般に知られること、評判、宣伝"},{"f":"consent","b":"同意，承諾"},{"f":"addiction","b":"依存"},{"f":"profession","b":"職業；専門職；同業者仲間"},{"f":"sacrifice","b":"犠牲；いけにえ"},{"f":"nerve","b":"神経；〔～s〕神経過敏；（...する）度胸（to do）"},{"f":"assumption","b":"(確証のない)仮定、想定、思い込み"},{"f":"context","b":"文脈、背景、状況"},{"f":"era","b":"時代"},{"f":"trait","b":"特徴、特色"},{"f":"voucher","b":"クーポン券、商品券"},{"f":"draft","b":"下書き；為替手形；隙間風"},{"f":"blaze","b":"炎、強いか輝き"},{"f":"currency","b":"通貨、普及"},{"f":"stance","b":"立場、対処の姿勢"},{"f":"fluid","b":"流動体，液体"},{"f":"dispute","b":"に異議を唱える；（を）議論する"},{"f":"counterpart","b":"相当する物［人］"},{"f":"perception","b":"認識、知覚"},{"f":"custody","b":"親権、保護、管理、拘留"},{"f":"venue","b":"会場、開催地"},{"f":"dread","b":"をひどく恐れる"},{"f":"incentive","b":"動機（づけ）；報奨金"},{"f":"disgust","b":"をむかつかせる；に愛想を尽かせる"},{"f":"province","b":"州，省；〔the ～s〕地方；分野"},{"f":"proponent","b":"支持者"},{"f":"commercial","b":"商業(上)の、営利的な"},{"f":"excessive","b":"過度の、法外な"},{"f":"vulnerable","b":"（攻撃などに）弱い，もろい；傷つきやすい"},{"f":"protective","b":"保護する、守ろうとする"},{"f":"secure","b":"安全な、確かな"},{"f":"obvious","b":"明らかな"},{"f":"reluctant","b":"気が進まない，嫌がる（⇔willing）"},{"f":"confident","b":"確信して、自信に満ちた"},{"f":"intelligent","b":"知能の高い、利口な"},{"f":"barren","b":"不毛の、作物ができない"},{"f":"epidemic","b":"流行（病）；蔓延"},{"f":"reliable","b":"信頼できる"},{"f":"curious","b":"好奇心の強い、詮索好きな"},{"f":"hasty","b":"急ぎの、早まった"},{"f":"behavioral","b":"行動の"},{"f":"bulky","b":"かさばった、扱いにくいほど大きい"},{"f":"faulty","b":"(機械・装置などが)欠陥のある"},{"f":"hectic","b":"やたらと忙しい"},{"f":"knowledgeable","b":"よく知っている、物知りの"},{"f":"tense","b":"張り詰めた，緊張した"},{"f":"intact","b":"損なわれていない，手つかずの"},{"f":"comprehensive","b":"包括的な、広範囲にわたる"},{"f":"hesitant","b":"ためらいがちな"},{"f":"scarce","b":"乏しい；珍しい"},{"f":"defensive","b":"防御的な"},{"f":"permanently","b":"永遠に、いつも"},{"f":"nonetheless","b":"それにもかかわらず，それでもなお"},{"f":"primarily","b":"主として、初めに"},{"f":"intentionally","b":"故意に、意図的に"},{"f":"abruptly","b":"突然に"},{"f":"outsource","b":"を外注する、を業務委託する"},{"f":"applaud","b":"に拍手する、を賞賛する"},{"f":"bribe","b":"賄賂"},{"f":"replicate","b":"(同一実験など)を繰り返す、を複製する"},{"f":"stroll","b":"散歩する、ぶらぶら歩く"},{"f":"swell","b":"膨張する，腫れる；を膨らませる"},{"f":"uphold","b":"を支持する、を確認する、を維持する"},{"f":"vomit","b":"吐く、もどす"},{"f":"expire","b":"期限が切れる"},{"f":"recruit","b":"を募る；に新人を補充する"},{"f":"enhance","b":"を高める、を増す"},{"f":"accumulate","b":"を蓄積する，集める；積もる"},{"f":"designate","b":"を指定する；を任命する"},{"f":"conceal","b":"を隠す（≒hide）；を秘密にする"},{"f":"disregard","b":"を無視する；を軽視する"},{"f":"accelerate","b":"を加速させる，促進する；加速する"},{"f":"revive","b":"を復活させる；復活する"},{"f":"enact","b":"(法案)を制定する、を通過させる"},{"f":"exert","b":"を及ぼす；（力など）を行使する"},{"f":"leak","b":"漏れる；を漏らす"},{"f":"jail","b":"刑務所，拘置所（≒prison）"},{"f":"reform","b":"を改革する、を改善する"},{"f":"declare","b":"を宣言する、を断言する"},{"f":"outline","b":"の要点を述べる；の輪郭を描く"},{"f":"annoy","b":"をいらいらさせる、を悩ます"},{"f":"interfere","b":"干渉する，介入する；邪魔する"},{"f":"nest","b":"(鳥の)巣"},{"f":"founder","b":"創設者"},{"f":"biologist","b":"生物学者"},{"f":"arrangement","b":"準備、配置、取り決め"},{"f":"landfill","b":"ごみ埋め立て地"},{"f":"trunk","b":"(木の)幹、(象の)鼻、(自動車の)"},{"f":"principle","b":"(個人の)主義、信条、原則"},{"f":"series","b":"連続、一続き"},{"f":"independence","b":"独立、自立"},{"f":"exploration","b":"探検、調査"},{"f":"justice","b":"正義、公正、司法、裁判"},{"f":"humanity","b":"人類"},{"f":"involvement","b":"関与、巻き込まれること"},{"f":"accounting","b":"経理、会計(学)"},{"f":"discrimination","b":"（～に対する）差別（against）；区別"},{"f":"inequality","b":"不平等"},{"f":"master","b":"修士"},{"f":"millennium","b":"千年間，千年紀"},{"f":"refusal","b":"拒否、拒絶"},{"f":"wound","b":"（銃弾・刃物などによる）傷；痛手"},{"f":"absence","b":"不在、欠席"},{"f":"distribution","b":"分配、配給"},{"f":"wilderness","b":"荒野；（庭・町などの）放置された部分"},{"f":"concentration","b":"濃度、集中、専念"},{"f":"craft","b":"工芸品、(手先でする)作業"},{"f":"crust","b":"地殻、パンの耳、(動物の)甲殻"},{"f":"basement","b":"地階、地下室"},{"f":"janitor","b":"(アパート・ビル・学校などの)用務員、管理人"},{"f":"prejudice","b":"偏見、先入観"},{"f":"prosperity","b":"繁栄、繁盛"},{"f":"robbery","b":"強盗(事件)"},{"f":"warranty","b":"保証(書)"},{"f":"appetite","b":"食欲；欲求"},{"f":"bullet","b":"銃弾"},{"f":"preparation","b":"準備、支度"},{"f":"citizenship","b":"市民権、公民権、市民[国民]であること"},{"f":"stale","b":"(パンなどが)堅くなった、鮮度の落ちた、陳腐な"},{"f":"disadvantaged","b":"(経済的・社会的に)恵まれない"},{"f":"ongoing","b":"継続している，進行中の"},{"f":"sturdy","b":"頑丈な、たくましい、不屈の"},{"f":"unauthorized","b":"権限のない、(公的に)認可されていない"},{"f":"verbal","b":"口頭での、言葉の[に関する]"},{"f":"weary","b":"疲れ果てた；（～に）うんざりした（of）"},{"f":"equivalent","b":"相当する、同等の"},{"f":"intense","b":"極度の、激しい"},{"f":"consecutive","b":"連続した"},{"f":"noticeable","b":"著しい、目立つ"},{"f":"crucial","b":"重大な、決定的な"},{"f":"electrical","b":"電気の、電気を扱う"},{"f":"steep","b":"（傾斜が）急な；急激な；法外な"},{"f":"civil","b":"(軍人・官史に対して)民間の、一般市民の"},{"f":"supreme","b":"最高の"},{"f":"elite","b":"えり抜きの"},{"f":"broad","b":"(幅の)広い、広範囲な"},{"f":"industrial","b":"産業の、工業の"},{"f":"allied","b":"連合の、同盟を組んだ"},{"f":"external","b":"外部の；対外的な"},{"f":"mere","b":"ほんの、単なる"},{"f":"latter","b":"後半の、後ろの方の、後者の"},{"f":"presidential","b":"大統領の[による]、社長の"},{"f":"ethical","b":"倫理(上)の、道徳の"},{"f":"realistic","b":"現実的な、実際的な"},{"f":"harmless","b":"害のない"},{"f":"underlying","b":"潜在的な、根本的な"},{"f":"urgent","b":"緊急の"},{"f":"complimentary","b":"無料の、賞賛する"},{"f":"eager","b":"熱望して、熱心な"},{"f":"loudly","b":"大声で、騒々しく"},{"f":"accordingly","b":"それ相応に、従って、そんなわけで"},{"f":"occasionally","b":"ときどき"},{"f":"smoothly","b":"順調に、滑らかに"},{"f":"frankly","b":"率直に、正直に"},{"f":"notably","b":"とりわけ"},{"f":"continuously","b":"連続して、継続して"},{"f":"compel","b":"（人）に強いて～させる"},{"f":"distinguish","b":"区別する、を区別する"},{"f":"heighten","b":"を高める、を増大させる"},{"f":"ruin","b":"を台無しにする、を駄目にする"},{"f":"equip","b":"に備えつける"},{"f":"export","b":"を輸出する"},{"f":"glance","b":"ちらりと見る"},{"f":"notify","b":"に知らせる"},{"f":"overdo","b":"を使い過ぎる、をやり過ぎる"},{"f":"pierce","b":"に穴を開ける、を突き通す"},{"f":"overestimate","b":"を過大評価する[見積もる]"},{"f":"raid","b":"(警察が)に手入れを行う、(軍隊が)を襲撃する"},{"f":"recall","b":"を思い出す、(商品など)を回収する"},{"f":"simplify","b":"を簡単にする"},{"f":"wrinkle","b":"(顔などに)しわを寄せる、(衣装など)にしわを作る"},{"f":"conspire","b":"陰謀を企てる、共謀する"},{"f":"imitate","b":"をまねる、を見習う"},{"f":"inhale","b":"を吸い込む"},{"f":"overrate","b":"過大評価される"},{"f":"sympathize","b":"同情する"},{"f":"glide","b":"滑らかに動く、音もなく移動する"},{"f":"kidnap","b":"を誘拐する"},{"f":"pretend","b":"のつもりになる、～するふりをする"},{"f":"simmer","b":"(煮立たない程度に)こことこ煮える[≒boil gently]"},{"f":"thaw","b":"解凍される、溶ける"},{"f":"unfold","b":"（閉じたもの）を開く；を明らかにする；開く；明らかになる"},{"f":"detain","b":"を勾留[留置]する、(人)を引き留める"},{"f":"puncture","b":"(タイヤ)をパンクさせる、に穴をあける"},{"f":"strangle","b":"(発展・活動など)を抑圧する、を窒息させる"},{"f":"hygiene","b":"衛生（状態）；健康法"},{"f":"oppression","b":"抑圧、虐待"},{"f":"collaboration","b":"合作、共同、協力"},{"f":"harbor","b":"港、避難所"},{"f":"lawn","b":"芝生"},{"f":"pedestrian","b":"歩行者"},{"f":"racism","b":"人種差別(主義[政策])"},{"f":"summit","b":"(先進国)首脳会議、サミット、(山などの)頂上"},{"f":"bug","b":"病原菌（が起こす病気）；虫；盗聴器；（機械・プログラムの）欠陥"},{"f":"dirt","b":"汚れ、泥、ほこり"},{"f":"maternity","b":"妊産婦の、母であること"},{"f":"stroke","b":"脳卒中；（ボールを）打つこと；（雷などの）一撃"},{"f":"tale","b":"(事実・伝説・架空の)話、(文学作品としての)物語"},{"f":"certainty","b":"確実性、確信"},{"f":"imbalance","b":"不均衡、アンバランス"},{"f":"incidence","b":"発生(率)"},{"f":"pit","b":"穴、くぼみ"},{"f":"texture","b":"感触，手触り；本質；質感"},{"f":"thumb","b":"(手の)親指"},{"f":"undergraduate","b":"学部学生"},{"f":"wisdom","b":"知恵、賢明さ"},{"f":"bride","b":"花嫁、新婦"},{"f":"dictator","b":"独裁者、専制君主"},{"f":"signature","b":"署名；特徴"},{"f":"testament","b":"あかし、証拠"},{"f":"attachment","b":"添付ファイル、添付書類"},{"f":"bachelor","b":"独身の男性、学士"},{"f":"blister","b":"水ぶくれ"},{"f":"blockade","b":"(港などの)封鎖、経済[通信]封鎖"},{"f":"condo","b":"分譲マンション"},{"f":"invoice","b":"明細請求書、納品書"},{"f":"leisure","b":"自由な時間、余暇"},{"f":"meditation","b":"瞑想、黙想"},{"f":"procession","b":"(儀式などの)行列、行進"},{"f":"unrest","b":"(社会的な)混乱、不安、(心の)動揺"},{"f":"equator","b":"赤道"},{"f":"exhausted","b":"疲れ果てた"},{"f":"problematic","b":"問題のある、疑わしい"},{"f":"desirable","b":"望ましい"},{"f":"geological","b":"地質(学)上の"},{"f":"rash","b":"早まった、軽率な"},{"f":"solitary","b":"ひとりの、孤独の"},{"f":"uneven","b":"でこぼこな、平でない"},{"f":"antique","b":"骨董の，アンティークの；古風な"},{"f":"dense","b":"密集した，密度の高い；（霧などが）濃い"},{"f":"economical","b":"経済的な、安上がりな"},{"f":"fictional","b":"架空の、フィクションの"},{"f":"gradual","b":"徐々の，緩やかな"},{"f":"intimate","b":"親密な；密接な"},{"f":"lengthy","b":"長い、長時間の"},{"f":"ultimate","b":"最終の、究極の"},{"f":"victorious","b":"勝利を得た、勝ち誇った"},{"f":"witty","b":"機知に富んだ"},{"f":"blurry","b":"ぼやけた、不鮮明な"},{"f":"exceptional","b":"例外的に優れた、まれな"},{"f":"finite","b":"有限の、限られた"},{"f":"on-the-job","b":"実地の、職場での"},{"f":"vacant","b":"空いている"},{"f":"cheery","b":"陽気な、元気な"},{"f":"cowardly","b":"卑怯な、臆病な"},{"f":"immeasurable","b":"計り知れない、果てしない、広大な"},{"f":"impaired","b":"～に障害のある、弱った、損なわれた"},{"f":"impassable","b":"(川・道などが)通行できない、(困難・障害などが)克服できない"},{"f":"inactive","b":"不活発な、停止中の"},{"f":"inconvenient","b":"不便な、不都合な"},{"f":"superstitious","b":"迷信深い、迷信の"},{"f":"unpleasant","b":"不愉快な、いやな"},{"f":"wicked","b":"悪意のある、意地の悪い"},{"f":"ecological","b":"環境の、生態(学)の"},{"f":"imaginary","b":"想像上の、架空の"},{"f":"ripe","b":"熟した；成熟した"},{"f":"disguise","b":"を（～に）変装させる（as）；を偽る"},{"f":"curb","b":"を抑制する、を制御する"},{"f":"restrain","b":"を制止する；を規制する"},{"f":"stumble","b":"よろけながら歩く；（～に）つまずく（on/over）"},{"f":"diminish","b":"を減らす；減少する（≒decrease）"},{"f":"rotate","b":"回転する；循環する；を回転させる"},{"f":"compress","b":"を要約する、を短縮する、を圧縮して詰め込む"},{"f":"decode","b":"(暗号・符号)を解読する"},{"f":"offset","b":"を相殺する，埋め合わせる；をオフセット印刷にする"},{"f":"bid","b":"（～に）の値をつける（for/on）；（挨拶）を述べる"},{"f":"burst","b":"破裂する；（～を）突然始める（into）"},{"f":"overtake","b":"を追い抜く；に追いつく（≒catch up with）；（災難・強い感情などが）を襲う"},{"f":"retain","b":"を保持する"},{"f":"litter","b":"(場所)を散らかす"},{"f":"prohibit","b":"を禁止する"},{"f":"discipline","b":"を罰する、を訓練する"},{"f":"yield","b":"を産出する、屈する、(権利など)を譲る"},{"f":"sweep","b":"（を）掃く；を一掃する；さっと通過する"},{"f":"dictate","b":"を指図する；を書き取らせる；を規定する"},{"f":"inject","b":"（人）に注射する，を注入する；を導入する"},{"f":"urge","b":"に熱心に勧める"},{"f":"mimic","b":"をまねる"},{"f":"roam","b":"（を）歩き回る；放浪する"},{"f":"assess","b":"を査定する、を評価する"},{"f":"boast","b":"を誇る；（を）自慢する"},{"f":"drag","b":"を引きずる；ぐずぐずする"},{"f":"repay","b":"を返済する"},{"f":"overthrow","b":"(政府・体制など)を打倒する"},{"f":"fulfill","b":"(約束・任務など)を果たす、(条件・要求など)を満たす"},{"f":"doom","b":"〔通例受身形で〕運命にある"},{"f":"affiliate","b":"を提携させる、を合併する"},{"f":"assault","b":"に暴行する；を攻撃する"},{"f":"testimony","b":"証言、証拠"},{"f":"errand","b":"（人の）使い，使い走り；用件"},{"f":"friction","b":"不和；摩擦"},{"f":"coalition","b":"連立、合同"},{"f":"influx","b":"(人・物の)殺到、(水・空気の)流入"},{"f":"curse","b":"悪態，ののしりの言葉；呪い；〔通例a ～〕災い"},{"f":"app","b":"アプリ"},{"f":"visibility","b":"視界、視野、目に見えること"},{"f":"fabric","b":"織物，布（地）；構造"},{"f":"collision","b":"衝突；対立"},{"f":"dioxide","b":"二酸化物"},{"f":"orbit","b":"軌道"},{"f":"trial","b":"裁判、試験、試み"},{"f":"literacy","b":"(特定分野の)知識、技能、読み書きの能力"},{"f":"scheme","b":"計画（≒plan）；体系；陰謀"},{"f":"completion","b":"完了、完成"},{"f":"expertise","b":"専門的知識[技術、意見]"},{"f":"diploma","b":"卒業[修了]証書、(学位・資格の)証明書"},{"f":"livelihood","b":"生計、生活手段"},{"f":"motive","b":"動機"},{"f":"recession","b":"不況；後退"},{"f":"surrounding","b":"周囲の状況、環境"},{"f":"fortune","b":"財産、幸運、運命"},{"f":"token","b":"(気持ちなどの)しるし、記念品"},{"f":"trace","b":"跡、形跡"},{"f":"venture","b":"危険を冒して進む；を思い切ってする"},{"f":"physician","b":"内科医、医師"},{"f":"perspective","b":"観点"},{"f":"physics","b":"物理学"},{"f":"legislation","b":"法律；立法"},{"f":"barn","b":"家畜小屋、(農家の)納屋"},{"f":"daring","b":"大胆な、勇敢な"},{"f":"transparent","b":"透明な；明快な"},{"f":"tragic","b":"悲惨な、悲劇的な"},{"f":"sinister","b":"邪悪な、不吉な"},{"f":"striking","b":"著しい、目立つ"},{"f":"plural","b":"複数の、2つ[2人]以上の、複数形の"},{"f":"vital","b":"必要不可欠な"},{"f":"sensitive","b":"敏感な、傷つきやすい"},{"f":"remarkable","b":"注目に値する、著しい"},{"f":"minimal","b":"最小(限度)の"},{"f":"bankrupt","b":"破産宣告を受けた；破綻している"},{"f":"authentic","b":"本物の；信頼できる"},{"f":"moderate","b":"適度な；穏健な"},{"f":"alien","b":"異質の、外国の"},{"f":"prompt","b":"迅速な"},{"f":"random","b":"無作為の、任意の"},{"f":"decisive","b":"決定的な、断固たる"},{"f":"inevitable","b":"避けられない、必然的な"},{"f":"acid","b":"酸性の；酸っぱい；辛辣な"},{"f":"climatic","b":"気候(上)の、風土の"},{"f":"incredible","b":"信じられない、驚くほどの"},{"f":"precise","b":"正確な、厳格な"},{"f":"invaluable","b":"極めて貴重な[高価]な"},{"f":"stern","b":"厳しい；いかめしい"},{"f":"indifferent","b":"無関心な（≒uninterested）"},{"f":"charitable","b":"慈善の、慈悲深い"},{"f":"massive","b":"大量の、大規模な、巨大な"},{"f":"comparable","b":"匹敵する、同様の"},{"f":"irrational","b":"不合理な"},{"f":"cynical","b":"冷笑的な，皮肉な"},{"f":"overly","b":"あまりに、過度に"},{"f":"literally","b":"文字どおり、まさしく"},{"f":"voluntarily","b":"自発的に"},{"f":"technically","b":"厳密に(言えば)、専門[技術]的に"},{"f":"wholly","b":"完全に、全く"},{"f":"approximately","b":"おおよそ、ほぼ"},{"f":"uniquely","b":"比類なく、独特に"},{"f":"bewilder","b":"（通例受身形で）当惑する"},{"f":"clutch","b":"をぐっとつかむ"},{"f":"discard","b":"を捨てる"},{"f":"enlist","b":"入隊する、参加する、(支持・協力)を得る"},{"f":"heed","b":"(助言・警告など)に注意する"},{"f":"liberate","b":"を解放する"},{"f":"overlap","b":"（一部）重なる；（と）重複［共通］する"},{"f":"reconstruct","b":"を再建する、を改変する"},{"f":"shriek","b":"悲鳴をあげる、甲高い声[音]を出す"},{"f":"sprain","b":"(足首・手首など)をくじく、を捻挫する"},{"f":"resent","b":"に憤慨する"},{"f":"thrive","b":"繁栄する，うまくいく；繁茂する"},{"f":"embrace","b":"を抱擁する、を(喜んで)受け入れる"},{"f":"excel","b":"（～で）秀でている（in/at）；に勝る"},{"f":"enroll","b":"登録する，入会する；を登録させる"},{"f":"retrieve","b":"（情報）を検索する；を取り戻す；を回復する"},{"f":"degrade","b":"の面目を失わせる、の質[価値]を低下させる"},{"f":"reconcile","b":"を（～と）一致させる（with）；を和解させる"},{"f":"contaminate","b":"を汚染する；を堕落させる"},{"f":"disrupt","b":"を混乱させる；を分裂させる"},{"f":"divert","b":"（注意など）をそらす；を迂回させる；（資金など）を転用する"},{"f":"grumble","b":"不平を述べる"},{"f":"provoke","b":"（感情・行動など）を引き起こす；を挑発する"},{"f":"outweigh","b":"より価値がある、より重い"},{"f":"crave","b":"(を)切望する"},{"f":"sustain","b":"を持続させる、を支える"},{"f":"disclose","b":"を公表する，暴く"},{"f":"tempt","b":"を（...する）気にさせる（to do）；を引きつける"},{"f":"resign","b":"（を）辞任する；を放棄する"},{"f":"dismiss","b":"を解雇する、(意見など)を退ける"},{"f":"surpass","b":"を上回る"},{"f":"bounce","b":"跳ねる；反射する；を弾ませる；（Ｅメールが）（宛先不明で）返送される"},{"f":"bureau","b":"（官庁の）局；事務局；案内所"},{"f":"dependency","b":"依存、従属"},{"f":"discomfort","b":"不快、不便"},{"f":"drawback","b":"欠点、不利な点"},{"f":"feast","b":"祝宴；大ごちそう；楽しみ"},{"f":"hydrogen","b":"水素"},{"f":"modernization","b":"近代化、現代化、最新式化"},{"f":"objective","b":"目的、目標"},{"f":"poll","b":"世論調査、投票(数)、投票所"},{"f":"ration","b":"(食料・物資などの)割当(量)"},{"f":"revenue","b":"歳入（⇔expenditure 歳出）；収益"},{"f":"scholarship","b":"奨学金、学識"},{"f":"upbringing","b":"(子供の)養育、しつけ"},{"f":"compliment","b":"賛辞"},{"f":"excerpt","b":"抜粋、引用"},{"f":"faith","b":"信仰(心)、信用"},{"f":"segment","b":"部分、区分"},{"f":"downturn","b":"(景気などの)下降(状態)"},{"f":"temper","b":"気質，気性；機嫌；かんしゃく"},{"f":"fragment","b":"断片"},{"f":"intersection","b":"(進路の)交差点"},{"f":"anarchy","b":"無秩序、無政府状態"},{"f":"breakup","b":"(人間関係の)解消、別れ"},{"f":"privilege","b":"特権"},{"f":"exemption","b":"(義務・責任などの)免除"},{"f":"monarch","b":"君主"},{"f":"narrative","b":"話、物語"},{"f":"sensation","b":"漠然とした感じ、感覚、大騒ぎ"},{"f":"apprentice","b":"見習い(工)、初心者"},{"f":"chore","b":"雑用、家事、いやな仕事"},{"f":"dehydration","b":"脱水(症状)"},{"f":"questionable","b":"疑わしい"},{"f":"outdated","b":"時代[流行]遅れの、旧式の"},{"f":"forthcoming","b":"来るべき"},{"f":"gross","b":"総計の；甚だしい；粗野な"},{"f":"overdue","b":"支払期限を過ぎた、(予定の日時より)遅れた"},{"f":"contemporary","b":"現代の、現代的な、同時代の"},{"f":"drastic","b":"徹底的な，抜本的な；極端な"},{"f":"conditional","b":"～しだいの、条件付きの"},{"f":"subjective","b":"主観的な"},{"f":"exotic","b":"外来の；異国風の"},{"f":"intensive","b":"集中的な、徹底的な"},{"f":"obscure","b":"（世に）知られていない；不明瞭な"},{"f":"tedious","b":"退屈な"},{"f":"exclusive","b":"高級な、排他的な"},{"f":"decent","b":"まずまずの；きちんとした；上品な"},{"f":"considerate","b":"思いやりのある"},{"f":"durable","b":"長持ちする、丈夫な"},{"f":"perpetual","b":"永続的な；ひっきりなしの"},{"f":"proficient","b":"堪能な、熟達した"},{"f":"acoustic","b":"音響の；聴覚の；（楽器が）アコースティックの"},{"f":"biographical","b":"伝記の"},{"f":"botanical","b":"植物の、植物学(上)の"},{"f":"brutal","b":"残酷な、無情な"},{"f":"commendable","b":"賞賛されるべき、立派な"},{"f":"desperate","b":"絶望的な、強く望んで、必死の"},{"f":"extravagant","b":"浪費する、(要求などが)過度な"},{"f":"filthy","b":"汚い、不潔な"},{"f":"serene","b":"穏やかな、平静な"},{"f":"valid","b":"法律的に有効な、理にかなった"},{"f":"inherent","b":"生来の，本来的に備わっている"},{"f":"merely","b":"単なる、ただの、単に"},{"f":"somehow","b":"何とかして、とにかく"},{"f":"subsequently","b":"その後、続いて"},{"f":"deliberately","b":"故意に、慎重に"},{"f":"gently","b":"優しく、静かに"},{"f":"via","b":"～の手段によって、～経由で"},{"f":"alongside","b":"～と一緒に、～と並んで"},{"f":"portray","b":"を描く；（の役）を演じる"},{"f":"dispatch","b":"を派遣する；を発送する；を処理する"},{"f":"quote","b":"が～と述べたと伝える、を引用する"},{"f":"amend","b":"を改正する、を修正する"},{"f":"betray","b":"をうっかり表す；を裏切る"},{"f":"wither","b":"(植物などが)しおれる"},{"f":"omit","b":"を省略する"},{"f":"fabricate","b":"をでっち上げる、を組み立てる"},{"f":"violate","b":"（法律・規則など）に違反する；を侵害する"},{"f":"allege","b":"を主張する"},{"f":"integrate","b":"を統合する；融合する"},{"f":"underestimate","b":"（を）過小評価する；（を）軽く見る；を少なく見積もる"},{"f":"escort","b":"を護衛[護送]する、に付き添う"},{"f":"facilitate","b":"を促進する、を容易にする"},{"f":"initiate","b":"を新たに始める"},{"f":"convey","b":"を伝える、を運ぶ"},{"f":"populate","b":"に住む，の住民である；に人を住まわせる"},{"f":"reinforce","b":"を補強する、を強化する"},{"f":"attain","b":"を獲得する，達成する；に達する"},{"f":"cheat","b":"(試験で)カンニングをする、をだます"},{"f":"deceive","b":"をだます（≒take in）"},{"f":"frustrate","b":"に不満を抱かせる、を挫折させる"},{"f":"subsidize","b":"に補助金[助成金]を支給する"},{"f":"alternate","b":"代わりの；交互の"},{"f":"dedicate","b":"を捧げる"},{"f":"endeavor","b":"～しようと(懸命に)努力する、を(真剣に)試みる"},{"f":"intrigue","b":"に興味を持たせる；陰謀を企てる"},{"f":"soar","b":"急上昇する；空高く飛ぶ"},{"f":"tease","b":"（を）からかう；をいじめる"},{"f":"confer","b":"(賞・学位・栄誉・権利など)を授与する、相談する"},{"f":"forbid","b":"を禁じる"},{"f":"nod","b":"(頭)を軽く下げる、うなずく"},{"f":"oblige","b":"に義務づける；に恩恵を施す"},{"f":"discontent","b":"不満"},{"f":"disposal","b":"処分、売却"},{"f":"exile","b":"亡命（者）；（国外）追放"},{"f":"foe","b":"敵"},{"f":"itinerary","b":"旅行の日程、旅行計画"},{"f":"persecution","b":"迫害"},{"f":"publication","b":"出版(物)、発行"},{"f":"riddle","b":"なぞなぞ、不可解な人[もの、事実]"},{"f":"sanitation","b":"公衆衛生（学）；下水［衛生］設備"},{"f":"component","b":"構成部品[部分、要素]"},{"f":"quota","b":"割当量[数]、ノルマ"},{"f":"cuisine","b":"（独特の）料理，料理法"},{"f":"detour","b":"迂回(路)、回り道"},{"f":"inmate","b":"(刑務所などの)収容者、入院患者"},{"f":"fatigue","b":"(相当の)疲労"},{"f":"uproar","b":"大騒ぎ、騒動"},{"f":"coincidence","b":"偶然の一致"},{"f":"correspondence","b":"通信、一致"},{"f":"ballot","b":"投票、投票用紙、投票総数"},{"f":"competence","b":"能力、資格"},{"f":"enterprise","b":"事業、企業"},{"f":"hazard","b":"危険（要素）；偶然"},{"f":"explosion","b":"爆発、急激な増加"},{"f":"famine","b":"飢饉；（食糧・物資の）ひどい不足"},{"f":"acceptance","b":"受諾、受け取り"},{"f":"leftover","b":"(特に食事の)残りもの"},{"f":"apprehension","b":"不安、懸念"},{"f":"wreck","b":"残骸、難破(船)"},{"f":"landmark","b":"（ある場所の）目印；画期的な出来事"},{"f":"dweller","b":"居住者"},{"f":"geometry","b":"幾何学"},{"f":"standby","b":"(いざというとき)頼りになるもの(人)、交替要因"},{"f":"diversity","b":"多様性"},{"f":"accuracy","b":"正確さ、的確さ"},{"f":"tap","b":"(水道などの)蛇口"},{"f":"brick","b":"れんが"},{"f":"bay","b":"入江、湾"},{"f":"lenient","b":"寛大な"},{"f":"stubborn","b":"頑固な，強情な（≒obstinate）；手に負えない"},{"f":"clumsy","b":"不器用な"},{"f":"perilous","b":"とても危険な"},{"f":"adverse","b":"不都合な；逆の"},{"f":"persistent","b":"執拗な、固執する、持続する"},{"f":"outrageous","b":"法外な、途方もない、けしからぬ"},{"f":"skeptical","b":"（～に）懐疑的な（of/about）"},{"f":"legitimate","b":"合法的な；妥当な"},{"f":"corrupt","b":"を堕落させる；を買収する；堕落する"},{"f":"experimental","b":"実験の、実験[試験]的な"},{"f":"improper","b":"不適切な、無作法な"},{"f":"spontaneous","b":"自然発生的な；自発的な"},{"f":"unconditional","b":"無条件の、絶対的な"},{"f":"counterfeit","b":"偽造の、偽の"},{"f":"dizzy","b":"目まいがする；当惑した"},{"f":"sustainable","b":"持続できる、維持できる"},{"f":"democratic","b":"民主主義の、民主的な"},{"f":"conservative","b":"保守的な"},{"f":"fundamental","b":"基本的な、必須の"},{"f":"ambitious","b":"(計画などが)野心的な、(人が)大志を抱いた"},{"f":"concrete","b":"具体的な、明確な、コンクリート製の"},{"f":"cruel","b":"残酷な"},{"f":"inferior","b":"劣悪な、劣った"},{"f":"ample","b":"十分すぎるほどの；広い"},{"f":"inaccurate","b":"不正確な、誤りのある"},{"f":"inadequate","b":"不十分な、不適当な"},{"f":"inappropriate","b":"ふさわしくない、不適当な"},{"f":"uncertain","b":"はっきり分からない、(人が)確信がない"},{"f":"vague","b":"あいまいな、不明確な"},{"f":"retreat","b":"引っ込む、退く"},{"f":"revolt","b":"暴動[反乱]を起こす、をむかむかさせる"},{"f":"deflect","b":"(人の注意・非難など)をそらす、の方向を変えさせる"},{"f":"demote","b":"を降格する"},{"f":"despise","b":"を軽蔑する、をひどく嫌う"},{"f":"grasp","b":"を理解する、をしっかりと握る"},{"f":"summon","b":"を呼び出す、を召喚する、(議会など)を招集する"},{"f":"expel","b":"を追放する；を吐き出す"},{"f":"redeem","b":"(失敗・欠点など)を補う、を埋め合わせる"},{"f":"comprise","b":"から成る；を構成する"},{"f":"prevail","b":"普及している；支配的である；（～に）打ち勝つ（over）"},{"f":"eject","b":"を取り出す、を追い出す"},{"f":"falsify","b":"を偽造する"},{"f":"obstruct","b":"をふさぐ、を妨害する"},{"f":"depict","b":"を描く"},{"f":"tremble","b":"震える"},{"f":"confess","b":"（を）告白する"},{"f":"stare","b":"じっと見つめる"},{"f":"ache","b":"痛む、うずく"},{"f":"reflect","b":"を反映する、を反射する、熟考する"},{"f":"assert","b":"を主張する"},{"f":"impose","b":"(規則・税・罰金など)を課[科]す、を押しつける"},{"f":"interpret","b":"を解釈する、を通訳する"},{"f":"devote","b":"(努力・時間など)を捧げる、に専念する"},{"f":"deteriorate","b":"(状況・質など)が悪化する"},{"f":"contemplate","b":"（を）熟考する；を予想する"},{"f":"delegate","b":"(権限・責任など)を委譲[委任]する、(人)を代表として派遣する"},{"f":"propel","b":"を進ませる、(人)を駆り立てる"},{"f":"recede","b":"後退する、退く"},{"f":"scrape","b":"(泥・ペンキ・さびなど)をこすり取る、の表面をこする"},{"f":"smash","b":"を粉砕する；を強打する；粉々に壊れる；激突する"},{"f":"scold","b":"(特に子供)をしかる"},{"f":"amuse","b":"を楽しませる"},{"f":"overhaul","b":"(システムなど)を総点検する、を分解修理する"},{"f":"herd","b":"(牛・羊などの)群"},{"f":"bait","b":"誘惑物、(釣り針・わなにつける)餌"},{"f":"petition","b":"請願(書)、嘆願(書)"},{"f":"ransom","b":"身代金、(身代金などによる)解放"},{"f":"fragrance","b":"芳香"},{"f":"insight","b":"見識、洞察力"},{"f":"conquest","b":"征服、(欠点・課題などの)克服"},{"f":"sincerity","b":"誠実"},{"f":"tariff","b":"関税"},{"f":"sanction","b":"制裁(措置)、認可"},{"f":"sphere","b":"領域；球体；天体"},{"f":"outcast","b":"見捨てられた人、浮浪者"},{"f":"affair","b":"事情、事柄、問題"},{"f":"scandal","b":"スキャンダル、不正行為"},{"f":"allergy","b":"アレルギー"},{"f":"destruction","b":"破壊、破滅"},{"f":"peasant","b":"(発展途上国などの)小作人、貧農"},{"f":"burden","b":"負担、重荷、荷物"},{"f":"faculty","b":"(大学・学部の)教授陣、学部、才能、能力"},{"f":"tactics","b":"作戦，方策；戦術，戦法"},{"f":"fare","b":"(乗り物の)運賃、料金"},{"f":"manner","b":"方法、風習、行儀、作法"},{"f":"correlation","b":"相互[相関]関係"},{"f":"weed","b":"雑草、草"},{"f":"command","b":"命令、指図、(外国語などを)自由に使える能力"},{"f":"quarter","b":"４分の１、(都市の特定の)地区、四半期"},{"f":"availability","b":"(入手の)可能性、有用[有効]性"},{"f":"caution","b":"用心、注意、警戒、警告"},{"f":"prevention","b":"予防、防止、妨害"},{"f":"reptile","b":"爬虫類(動物)"},{"f":"fate","b":"運命、(最終的な)結末"},{"f":"inclination","b":"意向、願望、好み"},{"f":"scorn","b":"軽蔑、侮蔑"},{"f":"contempt","b":"軽蔑；恥辱"},{"f":"domain","b":"分野；領域；ドメイン"},{"f":"pillar","b":"柱、支柱"},{"f":"tender","b":"柔らかい、優しい"},{"f":"awkward","b":"ばつの悪い、気まずい、ぎこちない"},{"f":"fierce","b":"猛烈な；どう猛な"},{"f":"peculiar","b":"変な、特有の"},{"f":"genuine","b":"本物の"},{"f":"vigorous","b":"精力的な；激しい；活力のある"},{"f":"gloomy","b":"陰気な；薄暗い；悲観的な"},{"f":"medieval","b":"中世の"},{"f":"subtle","b":"微妙な、かすかな"},{"f":"rigid","b":"厳しい；硬直した"},{"f":"coarse","b":"粗い、粗野な"},{"f":"humble","b":"謙虚な、地位[身分]などが低い"},{"f":"slack","b":"たるんだ、(商売などが)不活発な"},{"f":"trivial","b":"取るに足らない"},{"f":"mutual","b":"相互の"},{"f":"redundant","b":"不要な、余分な、(表現などが)冗長な"},{"f":"premature","b":"早過ぎる、(判断などが)早まった"},{"f":"attentive","b":"注意深い"},{"f":"integral","b":"不可欠な、必要な"},{"f":"memorable","b":"忘れられない、記憶すべき"},{"f":"persuasive","b":"説得力のある"},{"f":"prevalent","b":"蔓延している、広く行き渡っている"},{"f":"unaware","b":"気づかないで、知らないで"},{"f":"worthwhile","b":"(時間・労力・金をかける)価値のある"},{"f":"amazing","b":"驚くべき"},{"f":"eligible","b":"適格の，資格のある；（結婚相手として）望ましい"},{"f":"vicious","b":"悪意[敵意]のある、乱暴な"},{"f":"invisible","b":"見えない"},{"f":"invalid","b":"(法的に)無効な"},{"f":"rotten","b":"(食べ物などが)腐った、(道徳的に)腐敗した"},{"f":"plague","b":"疫病；（害虫などの）異常発生"},{"f":"sponsor","b":"に資金を提供する、を後援する"},{"f":"honor","b":"を賞賛する、に与える、を尊敬する"},{"f":"remark","b":"～と述べる"},{"f":"incorporate","b":"を取り[組み]入れる"},{"f":"resolve","b":"(問題など)を解決する、を決意する"},{"f":"sway","b":"(ゆっくりと)揺れる、動揺する"},{"f":"inherit","b":"(遺伝で)を受け継ぐ、を相続する"},{"f":"pile","b":"を大量に積む、を積み重ねる、積み重なる"},{"f":"renovate","b":"を改修[改築]する"},{"f":"maximize","b":"を最大限にする"},{"f":"uncover","b":"(遺跡など)を発掘する、の覆いを取る、を明るみに出す"},{"f":"mislead","b":"に誤った考えを持たせる、を欺く"},{"f":"opt","b":"選ぶ"},{"f":"outnumber","b":"より数で勝る"},{"f":"presume","b":"と思う；と推定する；を前提とする"},{"f":"refine","b":"を洗練する；を精製する"},{"f":"stir","b":"をかき回す；を揺り動かす"},{"f":"strive","b":"懸命に努力する"},{"f":"thrill","b":"をわくわく[ぞくぞく]させる"},{"f":"tighten","b":"を固く締める、を強化する"},{"f":"arouse","b":"（感情など）を引き起こす；を目覚めさせる"},{"f":"buzz","b":"(場所が)ざわつく、どよめく"},{"f":"converge","b":"集まる、集中する"},{"f":"deduct","b":"を控除する、を減じる"},{"f":"disconnect","b":"(人)のインターネットへの接続を切る、の接続を断つ"},{"f":"gossip","b":"うわさ話をする"},{"f":"wander","b":"(当てもなく)歩き回る、ぶらつく"},{"f":"suck","b":"（を）吸う；（を）しゃぶる"},{"f":"dye","b":"を～色に染める、を染める"},{"f":"trespass","b":"(不法)侵入する、侵害する"},{"f":"graze","b":"(家畜などが)牧草を食べる"},{"f":"entrust","b":"AにBを任せる"},{"f":"peer","b":"同僚、仲間、同等[対等]の者"},{"f":"molecule","b":"分子、微粒子"},{"f":"meantime","b":"その間"},{"f":"merit","b":"価値、優秀さ、長所"},{"f":"prospect","b":"見込み、見通し、期待"},{"f":"chatter","b":"くだらないおしゃべり"},{"f":"funeral","b":"葬式"},{"f":"methodology","b":"方法論、研究方法"},{"f":"bundle","b":"束、包み"},{"f":"burglar","b":"強盗、泥棒"},{"f":"canyon","b":"峡谷"},{"f":"duration","b":"（時間の）継続，持続（時間）"},{"f":"fountain","b":"噴水、源泉、湧き水"},{"f":"genius","b":"天賦の才、天才(的な人)"},{"f":"grassland","b":"牧草地、草原"},{"f":"interval","b":"（時間の）間隔；合間；隔たり；小休止"},{"f":"longevity","b":"長寿；寿命；長年勤続"},{"f":"mode","b":"方法、様式"},{"f":"needle","b":"針、縫い針、編み針"},{"f":"organizer","b":"主催者、まとめ役、幹事"},{"f":"rehearsal","b":"(劇・音楽などの)リハーサル、下げいこ"},{"f":"servant","b":"(特に住み込みの)使用人、召使"},{"f":"sociology","b":"社会学"},{"f":"spectacle","b":"(印象的な)光景、壮観、見もの"},{"f":"norm","b":"標準、規範、典型"},{"f":"certificate","b":"証明書；免許状"},{"f":"vice","b":"悪習、悪"},{"f":"knot","b":"結び目、結び方"},{"f":"rubber","b":"ゴム、ゴム製品"},{"f":"asteroid","b":"小惑星"},{"f":"syndrome","b":"症候群、シンドローム"},{"f":"detention","b":"拘置、留置"},{"f":"distress","b":"苦悩、苦痛"},{"f":"ignition","b":"(エンジンの)点火装置、点火"},{"f":"esteem","b":"尊敬、尊重"},{"f":"hospitality","b":"親切なもてなし，歓待；受容性"},{"f":"legacy","b":"遺産"},{"f":"sane","b":"(考え方などが)健全な、分別のある、正気の"},{"f":"doubtful","b":"(物・事が)疑わしい、(人が)疑わしく思う"},{"f":"favorable","b":"好意的な、好ましい"},{"f":"generous","b":"気前のよい、寛大な"},{"f":"hollow","b":"空洞の；空虚な；うわべだけの"},{"f":"internal","b":"内部の、内側の、国内の"},{"f":"interpersonal","b":"人間[対人]関係の"},{"f":"staple","b":"必需食品；主要産物"},{"f":"tolerant","b":"寛容な、包容力のある"},{"f":"folk","b":"民間(起源)の、民衆の"},{"f":"furious","b":"激怒した；猛烈な"},{"f":"ironic","b":"皮肉な、反語的な"},{"f":"pale","b":"(人・顔色などが)青白い、血の気を失った、(色が)淡い、薄い"},{"f":"pregnant","b":"妊娠した"},{"f":"rewarding","b":"満足感が得られる、報われる"},{"f":"sacred","b":"神聖な、聖なる、宗教的な"},{"f":"terrific","b":"素晴らしい、すてきな"},{"f":"abridged","b":"簡約[短縮]された"},{"f":"dull","b":"退屈な、頭が鈍い"},{"f":"faint","b":"かすかな；めまいがする；弱々しい"},{"f":"irresponsible","b":"無責任な"},{"f":"notorious","b":"悪名高い（≒infamous）"},{"f":"recurrent","b":"(周期的に)繰り返される、(病気などが)再発する"},{"f":"irresistible","b":"抵抗できない、非常に魅力的な"},{"f":"binding","b":"拘束力のある、義務を負わせる"},{"f":"dejected","b":"落胆した、元気のない"},{"f":"fictitious","b":"架空の、偽りの"},{"f":"gracious","b":"親切な、丁寧な"},{"f":"upcoming","b":"やがて起ころう[現れよう]としている、来るべき"},{"f":"abundant","b":"豊富な"},{"f":"grind","b":"（穀物など）をひく"},{"f":"archive","b":"〔しばしば～s〕記録文書，公文書；公文書保管所；（コンピューターの）アーカイブ"},{"f":"devise","b":"を考案する"},{"f":"precede","b":"に先行する"},{"f":"horrify","b":"を怖がらせる"},{"f":"lodge","b":"(苦情・抗議など)を申し出る、を預ける、を泊める"},{"f":"mediate","b":"調停する、仲裁する"},{"f":"mingle","b":"付き合う、仲間に入る、混ざる"},{"f":"perspire","b":"汗をかく"},{"f":"concede","b":"(しぶしぶ)～と認める"},{"f":"hinder","b":"を妨げる"},{"f":"waver","b":"(心が)揺れ動く、迷う"},{"f":"formulate","b":"(計画など)を(注意深く)まとめる、を明確に述べる"},{"f":"exhale","b":"(息・煙・言葉など)を吐き出す"},{"f":"rebound","b":"(ボールなどが)跳ね返る"},{"f":"gratify","b":"を喜ばせる、を満足させる"},{"f":"pledge","b":"を誓う，約束する；を与えることを約束する"},{"f":"fasten","b":"をしっかり留める、を固定する"},{"f":"relay","b":"を伝達する、を取り次ぐ、を中継で送る"},{"f":"align","b":"を一直線に並べる"},{"f":"ascend","b":"（を）上がる"},{"f":"gaze","b":"じっと見る"},{"f":"adore","b":"が大好きである、を敬愛する"},{"f":"chill","b":"(食べ物・飲み物など)を冷やす、冷える"},{"f":"curve","b":"カーブする、曲がる"},{"f":"deflate","b":"(タイヤ・風船などが)しぼむ、をしぼませる"},{"f":"detach","b":"を分離する、を取り外す"},{"f":"enclose","b":"を同封する；を取り囲む"},{"f":"fetch","b":"を（行って）持って［連れて］くる"},{"f":"proclaim","b":"を宣言する"},{"f":"forge","b":"を偽造する；（関係など）を築く；を鍛造する"},{"f":"outburst","b":"(火山・怒り・笑いなど)の爆発"},{"f":"dimension","b":"局面、寸法、規模、次元"},{"f":"swarm","b":"大群"},{"f":"sequel","b":"続編、結果"},{"f":"artifact","b":"人工遺物、工芸品"},{"f":"mercy","b":"慈悲；〔通例a ～〕幸運"},{"f":"successor","b":"後継者、相続人"},{"f":"triumph","b":"(大)勝利、成功"},{"f":"clause","b":"(法律・条約などの)条項、(文の)節"},{"f":"analogy","b":"類推；類似"},{"f":"downfall","b":"破滅、転落、(雨・雪などの)大降り"},{"f":"fusion","b":"融合(物)、(政府などの)連立"},{"f":"fracture","b":"骨折、割れ目、裂け目"},{"f":"menace","b":"困りもの、危険人物、脅威"},{"f":"setback","b":"(進歩・発展の)妨げ、支障"},{"f":"empathy","b":"共感、感情移入"},{"f":"tumble","b":"転倒、(株価などの)暴落"},{"f":"diameter","b":"直径"},{"f":"momentum","b":"勢い、はずみ"},{"f":"troop","b":"軍隊、兵隊"},{"f":"pharmacy","b":"薬屋、薬局"},{"f":"nightmare","b":"悪夢、(悪夢のような)恐ろしい経験"},{"f":"slope","b":"坂、斜面"},{"f":"glacier","b":"氷河"},{"f":"grief","b":"(死などに対する)深い悲しみ、悲痛"},{"f":"misery","b":"惨めさ、悲惨さ"},{"f":"accent","b":"なまり、方言"},{"f":"ambassador","b":"大使"},{"f":"autopsy","b":"検死"},{"f":"blast","b":"爆発、爆破、突風"},{"f":"courtesy","b":"礼儀正しさ；好意；優遇"},{"f":"deed","b":"(意図的な)行為、行い"},{"f":"discourse","b":"話し合い，会話；講演；論説"},{"f":"impulse","b":"衝動"},{"f":"jar","b":"(広口の)びん、つぼ"},{"f":"sibling","b":"兄弟姉妹(の１人)"},{"f":"enthusiasm","b":"熱狂、熱中"},{"f":"treasure","b":"宝物、貴重品"},{"f":"horizontal","b":"水平な"},{"f":"indefinite","b":"限定されない、不定の、はっきりしない"},{"f":"vulgar","b":"下品な、無作法な"},{"f":"resilient","b":"回復力のある、弾力(性)ある"},{"f":"aquatic","b":"(動植物が)水生の、水の"},{"f":"insistent","b":"強く主張する、執拗な"},{"f":"frantic","b":"大急ぎの、気が狂いそうな"},{"f":"deceptive","b":"人を惑わすような"},{"f":"illogical","b":"筋の通らない、不合理な"},{"f":"elaborate","b":"精巧な、入念な"},{"f":"mellow","b":"(性格が)円熟した、柔らかくて豊かな[美しい]"},{"f":"boundless","b":"無限の"},{"f":"cordial","b":"心温まる、心からの"},{"f":"seasonal","b":"季節(ごと)の"},{"f":"sour","b":"酸っぱい"},{"f":"swift","b":"素早い"},{"f":"cumulative","b":"累積する、しだいに増加する"},{"f":"savage","b":"残酷な、凶暴な"},{"f":"admirable","b":"賞賛に値する、素晴らしい"},{"f":"informative","b":"有益な、情報[知識]を提供する"},{"f":"proportional","b":"釣り合った、比例した"},{"f":"simultaneous","b":"同時に起こる"},{"f":"static","b":"変化[進歩]のない"},{"f":"uneasy","b":"不安な、心配な、落ち着かない"},{"f":"unequal","b":"(権利などが)不平等な"},{"f":"autonomous","b":"自治の、自主的な"},{"f":"bold","b":"大胆な、勇敢な"},{"f":"pessimistic","b":"悲観的な"},{"f":"repetitive","b":"繰り返しの"},{"f":"respiratory","b":"呼吸器に関する、呼吸の"},{"f":"coherent","b":"一貫した，筋の通った；結束した"},{"f":"account for ～","b":"(割合・分量など)を占める、～(の理由)を説明する"},{"f":"accuse A of B","b":"AをBの罪で告訴する、AをBの理由で非難する"},{"f":"act on ～","b":"(忠告・情報など)に従って行動する、～に影響を及ぼす"},{"f":"act out ～","b":"(物語・経験など)を身振りで実演する"},{"f":"add up to ～","b":"(合計が)～になる、結局～ということになる"},{"f":"adhere to ～","b":"(信念・規則など)を順守する、～に固執する"},{"f":"air out ～","b":"(部屋など)を換気する、(衣類・寝具など)を外気に当てる"},{"f":"all but","b":"ほとんど"},{"f":"allow for ～","b":"～を考慮に入れる、～を見込む"},{"f":"answer for ～","b":"～の責任を負う、～の罰を受ける"},{"f":"aspire to do ～","b":"～することを熱望[切望]する"},{"f":"attribute A to B","b":"AをBのせいと考える"},{"f":"back down","b":"撤回する、敗北[非]を認める"},{"f":"back off","b":"手を引く、撤回する、後退する"},{"f":"back up ～","b":"～を裏付ける、～を支援する、(ファイルなど)のコピーを取る"},{"f":"back on ～","b":"～を当てにする"},{"f":"be committed to ～","b":"～に献身している"},{"f":"be destined to do ～","b":"～する運命である"},{"f":"(be) free of ～","b":"(料金・税金など)がない、～免除されている"},{"f":"be obsessed with ～","b":"(妄想・固定観念など)に取りつかれている"},{"f":"be subject to ～","b":"(病気など)にかかりやすい、(影響など)を受けやすい"},{"f":"blast off","b":"打ち上げられる、発射される"},{"f":"blow up","b":"(かんかんに)怒る、爆発する"},{"f":"bounce back","b":"(打撃・病気などから)回復する、立ち直る"},{"f":"branch off","b":"(話題が)変わる、(わき道に)それる"},{"f":"break away from ～","b":"(伝統・習慣など)を断つ、(束縛など)から逃れる"},{"f":"break down","b":"決裂する、失敗する、故障する"},{"f":"break off ～","b":"～を中断する、～を急にやめる"},{"f":"break out","b":"勃発する、(伝染病などが)発生する"},{"f":"bring about ～","b":"～を引き起こす、～を招く"},{"f":"bring down ～","b":"(人・政府など)を(打ち)倒す"},{"f":"bring off ～","b":"～をやってのける、～を成し遂げる"},{"f":"bring on ～","b":"(災い・病気など)をもたらす"},{"f":"bring out ～","b":"(才能・性質など)を引き出す、～を発揮させる"},{"f":"bump into ～","b":"～にばったり出会う"},{"f":"burn out ～","b":"(人)を疲れ果てさせる、～を燃え尽きさせる"},{"f":"by means of ～","b":"～用いて、～によって"},{"f":"call for ～","b":"～を必要とする、～を要求する"},{"f":"call off ～","b":"～を中止する"},{"f":"call on ～","b":"～を訪ねる、(人)に頼む"},{"f":"carry away ～","b":"無我夢中になる、～を持ち去る"},{"f":"carry through ～","b":"～を成し遂げる、～を成就させる"},{"f":"catch up on ～","b":"(近況など)について新しい情報を知る、～の遅れを取り戻す"},{"f":"check off ～","b":"～にチェックマークをつける"},{"f":"chip in ～","b":"(金・労力などを)出し合う"},{"f":"clean out ～","b":"～の中をきれいにする、～を空にする"},{"f":"clear out ～","b":"～の中身を出してきれいに片付ける、～を空にする"},{"f":"clear up (～)","b":"(誤解など)を解く、(問題など)を解明する、～片付ける、晴れる"},{"f":"close in (on ～)","b":"(～を)包囲する、(～に)追ってくる"},{"f":"come after ～","b":"～の後をつける、～を追跡する"},{"f":"come before ～","b":"(問題などが)(法廷など)で審議される、(法廷など)に出頭する"},{"f":"come down to ～","b":"要するに～ということになる"},{"f":"come down with ～","b":"(軽い病気)にかかる"},{"f":"come into ～","b":"～の状態になる"},{"f":"come off","b":"結局～になる、行われる"},{"f":"come through","b":"要求に応える、伝えられる"},{"f":"comply with ～","b":"(規則・基準など)に従う"},{"f":"contribute to ～","b":"～の一因となる、～に寄与[貢献]する～に寄付する"},{"f":"cope with ～","b":"～うまく処理する、～に対処する"},{"f":"count for ～","b":"～の価値がある"},{"f":"count on ～","b":"～を当てにする"},{"f":"cover for ～","b":"～の代わり[代理]を務める"},{"f":"cover up ～","b":"～(の事実)を隠す、～を秘密にする"},{"f":"crack up","b":"神経が参る、気が変になる、大笑いする"},{"f":"cross out ～","b":"～を線を引いて消す"},{"f":"cut back (on ～)","b":"(～を)削減[縮小]する"},{"f":"cut down (on ～)","b":"(～を)減らす"},{"f":"cut in (on ～)","b":"(話などに)割り込む、さえぎる"},{"f":"deal in ～","b":"(商品)を商う、(仕事など)に従事する"},{"f":"deprive A of B","b":"AからBを奪う"},{"f":"die down","b":"静まる、衰える"},{"f":"die out","b":"絶滅する"},{"f":"dispose of ～","b":"～を処分する、を捨てる"},{"f":"do away with ～","b":"～を廃止する、～を取り除く"},{"f":"drag on","b":"(会議などがだらだらと)長引く"},{"f":"drag out ～","b":"～を(必要以上に)長引かせる"},{"f":"draw on ～","b":"(技術・経験など)に頼る、～を利用する"},{"f":"draw up ～","b":"(計画)を立てる、(報告書など)を作成する"},{"f":"dream up ～","b":"(奇抜な考え・計画など)を思いつく、～を考え出す"},{"f":"drive off [away] ～","b":"～を追い払う"},{"f":"drive up ～","b":"(価格など)を急速に上昇させる"},{"f":"drop back (to ～)","b":"(～に)後退する、順位が下がる"},{"f":"drop out (of ～)","b":"(活動・集団から)身を引く、(学校を)中途退学する"},{"f":"ease into ～","b":"(仕事など)に徐々に慣れる"},{"f":"eat up ～","b":"～を使い果たす、～を食べ尽くす"},{"f":"embark on [upon] ～","b":"(事業など)に乗り出す、～に着手する"},{"f":"endear A to B","b":"AをBに慕わせる"},{"f":"even up ～","b":"～を等しくする、～を均等にする"},{"f":"face off","b":"対決する"},{"f":"fall away","b":"減少する、弱まる、衰える"},{"f":"fall back on ～","b":"～を当てにする"},{"f":"fall for ～","b":"(うまい話・売り込みなど)に乗せられる、～に強く引きつけられる"},{"f":"fall off","b":"(数・量が)減少する、(質が)低下する"},{"f":"fall on ～","b":"(責任・仕事などが)～に降りかかる、(記念日などが)～に当たる"},{"f":"fall through","b":"(計画などが)駄目になる、失敗する"},{"f":"fall under ～","b":"(影響・監督など)を受ける"},{"f":"feel for ～","b":"～に同情する、～を思いやる"},{"f":"figure out ～","b":"～を理解する、～を解決する"},{"f":"fill out ～","b":"(書類)に必要事項を記入する"},{"f":"fire up ～","b":"～始動させる、～に火をつける"},{"f":"fit into ～","b":"～に溶け込む、～に収まる"},{"f":"fix up ～","b":"～を修理する、～を改装する"},{"f":"for all ～","b":"～にもかかわらず、～を考慮しても"},{"f":"for the time being","b":"当分の間(は)、さしあたり"},{"f":"force down ～","b":"(感情など)を抑える"},{"f":"free up ～","b":"～を自由化する、～解放する"},{"f":"frown on [upon] ～","b":"～に難色を示す、～に不賛成の意を表す"},{"f":"gear up ～","b":"準備をする"},{"f":"get around (～)","b":"あちこち動き回る、歩き回る、～をうまく避ける、～を逃れる"},{"f":"get around to doing ～","b":"～をする余裕[暇]ができる"},{"f":"get away with ～","b":"～を(罰などを受けずに)うまくやる"},{"f":"get by ～","b":"何とかやっていく、通り抜ける"},{"f":"get down to ～","b":"～本気で取りかかる"},{"f":"get in on ～","b":"～に参加する、～に加わる"},{"f":"get into ～","b":"(本・映画・音楽など)に夢中になる、(ある状態)になる"},{"f":"get on with ～","b":"(仕事など)を続ける、(人)とうまくやっていく"},{"f":"give away ～","b":"(秘密・答えなど)をばらす、～をただで与える、～を安く売る"},{"f":"give in (to ～)","b":"(～に)降参する、屈する、負ける"},{"f":"give off ～","b":"(光・音・においなど)を発する"},{"f":"give A over to B","b":"AをBに預ける、AをBに引き渡す"},{"f":"give rise to ～","b":"～の原因となる、(悪い事態)を生じさせる"},{"f":"go back on ～","b":"(約束など)を破る"},{"f":"go for ～","b":"～を選ぶ"},{"f":"grow into ～","b":"(成長して)(服など)を着られるようになる"},{"f":"grow on ～","b":"(人)の気にいるようになる、(習慣などが)～の身につてくる"},{"f":"grow out of ～","b":"(成長して)(行為・習慣など)から脱する、～から生じる"},{"f":"hand down ～","b":"(伝統・慣習など)を(後世に)伝える、(判決など)を言い渡す"},{"f":"hand off ～","b":"～を任せる、～を引き渡す"},{"f":"hand out A (to B)","b":"(Bに)Aを配る"},{"f":"hang around (～)","b":"(～を)ぶらつく、うろつく"},{"f":"hang on","b":"(少し)待つ、電話を切らずにおく"},{"f":"hang up ～","b":"(電話を)切る"},{"f":"head off (～)","b":"～を阻止する、～を回避する、出かける、立ち去る"},{"f":"head out","b":"出かける、立ち去る"},{"f":"hold back ～","b":"～を抑えておく"},{"f":"hold off ～","b":"～を引き延ばす、～を延期する"},{"f":"hold out (～)","b":"(敵・逆境・圧力などに)もちこたえる、～を差し出す"},{"f":"hold over ～","b":"続映[続演]される、～を延期する"},{"f":"in a row","b":"連続で"},{"f":"in favor of ～","b":"～に賛成して、～を支持して"},{"f":"in response to ～","b":"～に応えて、～に応じて"},{"f":"in terms of ～","b":"～の観点から"},{"f":"in the event of ～","b":"(万一)～の場合には"},{"f":"in vain","b":"無駄に、効果なく、～にすぐ飛びつく"},{"f":"jump at ～","b":"～にすぐ飛びつく"},{"f":"keep track of ～","b":"(人の動向・情勢など)に注意している、～の跡をたどる"},{"f":"keep up with ～","b":"(時勢・流行・人・仕事・勉強など)に遅れずについていく"},{"f":"kick around ～","b":"(計画・提案など)をあれこれ検討する"},{"f":"kick in","b":"(薬などが)効き始める、機能し始める"},{"f":"kick off A (with B)","b":"(Bで)Aを開始する"},{"f":"kick A out (of B)","b":"(Bから)Aを追い出す[首にする]"},{"f":"knock down ～","b":"～を取り壊す、～を解体する、～を殴り倒す"},{"f":"lay into ～","b":"～を厳しく非難する、～を攻撃する"},{"f":"lay off ～","b":"(一時的にまたは永久に) ～を解雇する"},{"f":"leave off (～)","b":"(～を)やめる"},{"f":"let alone ～","b":"まして～、～は言うまでもなく"},{"f":"let down ～","b":"～を失望させる、～(の期待・信頼)を裏切る"},{"f":"let out ～","b":"(声など)を出す、(感情)を表す、～を外に出す"},{"f":"let up","b":"手を緩める、(望ましくないことが)弱まる、(風雨などが)やむ"},{"f":"level off [out]","b":"横ばいになる、安定する"},{"f":"lift off","b":"(飛行機などが)離陸する"},{"f":"live up to ～","b":"(期待など)に応える、(規範など)に従って行動する"},{"f":"lock in ～","b":"～を固定する、(鍵をかけて)～を閉じ込める"},{"f":"look down on ～","b":"～を見下す、～を軽蔑する"},{"f":"make (both) ends meet","b":"(収支を合わせて)収入内で何とかやりくりする"},{"f":"make do with ～","b":"(あり合わせのもの)で済ます"},{"f":"make it","b":"間に合う、成功する、(会合などに)出席できる"},{"f":"make out (～)","b":"～を理解する、うまくやる"},{"f":"make over ～","b":"～を作り変える、～変身させる"},{"f":"mark down ～","b":"～を値下げする、～を書き留める"},{"f":"mark out ～","b":"(線などで)～を区画する、～を区切る"},{"f":"miss out on ～","b":"(機会・好機など)を逸する"},{"f":"narrow down ～","b":"(範囲など)を制限する、～を狭くする"},{"f":"on a ～ basis","b":"～の基準で、～の原則で"},{"f":"on [in] behalf of A","b":"Aを代表して、Aに代わって"},{"f":"on the contrary","b":"それどころか、まるで反対で"},{"f":"on the spot","b":"その場で、即座に"},{"f":"on the verge of ～","b":"～の間際[寸前]で"},{"f":"over the hump","b":"難局を脱して、峠を越して"},{"f":"owing to ～","b":"～のために、～の理由で"},{"f":"pack up","b":"(仕事などが終わって)持ち物をまとめる、荷造りする"},{"f":"pass for ～","b":"～で通る、～と見なされる"},{"f":"pass off A (as B)","b":"Aを(Bだと)偽る"},{"f":"pass A on (to B)","b":"A(もの・情報・病気・利益など)を(Bに)伝える[渡す]"},{"f":"pass out","b":"気絶する"},{"f":"pay off ～","b":"(借金など)を全部支払う"},{"f":"phase out ～","b":"～を段階的に廃止[排除]する"},{"f":"pick over ～","b":"～念入りに調べて選ぶ、～を吟味する"},{"f":"pick through ～","b":"～の中をくまなく探す"},{"f":"pile up","b":"(仕事・借金などが)どんどんたまる、山積する"},{"f":"pin down ～","b":"～を押さえつける、～を動けなくする"},{"f":"play down ～","b":"～を(実際より)重要でないように見せようとする"},{"f":"play out (～)","b":"(物事・状況が)展開する、徐々に進展する、～を最後まで演じる"},{"f":"play up ～","b":"～を誇張する、～強調する"},{"f":"point to ～","b":"(状況・証拠などが)～を示す、(大事な点・理由など)を指摘する"},{"f":"pull back (～)","b":"後退する、～を後退させる、思いとどまる"},{"f":"pull in ～","b":"(観客・客など)を引きつける、(利益・金など)を得る"},{"f":"pull off ～","b":"(困難なこと)をやってのける"},{"f":"pull through ～","b":"(病気・苦境など)を切り抜ける"},{"f":"push for ～","b":"～を要求する、～を得ようと努める"},{"f":"push through ～","b":"(議案など)を通す、～を突き進む"},{"f":"put down ～","b":"(金額)を手付金として払う、～を書き留める"},{"f":"put forth ～","b":"(力など)を発揮する、(計画・案など)を提出する"},{"f":"put toward ～","b":"～を提案[提出]する"},{"f":"put in ～","b":"(設備など)を備え付ける、(金・時間・精力など)をつぎ込む"},{"f":"put A through (to B)","b":"Aの電話を(Bに)つなぐ"},{"f":"read off ～","b":"(リストなど)を読み上げる"},{"f":"refrain from doing ～","b":"～するのを控える、～するのをやめる"},{"f":"regardless of ～","b":"～に(も)かかわらず、～にかまわず"},{"f":"roll in (～)","b":"(金など)がたくさんある、転がり込む、どっと集まる"},{"f":"roll up ～","b":"～をくるくると巻く、(そで・すそ)をまくり上げる"},{"f":"round off ～","b":"～を締めくくる、～をうまく終える"},{"f":"round up ～","b":"(散らばった人など)を集める、～を逮捕する"},{"f":"rule out ～","b":"～を排除する、～を除外する"},{"f":"run against ～","b":"～に不利になる"},{"f":"run down ～","b":"(車・運転手が)～をひく、～のことを悪く言う、～を突き止める"},{"f":"run through ～","b":"ざっと～を読み上げる[に目を通す]"},{"f":"scoop up ～","b":"～を抱き上げる、～をすくい上げる"},{"f":"scratch out ～","b":"～を削除する、やっと(生計)を立てる"},{"f":"see about ～","b":"～を検討する、～を手配する、～を何とかする"},{"f":"see A off","b":"(空港・駅などで)Aを見送る"},{"f":"see through ～","b":"～を見抜く、～を見破る、～を通して見る"},{"f":"sell out","b":"(期待を)裏切る、(ものが)売り切れる"},{"f":"send for ～","b":"(人・助けなど)を呼ぶ、～に来てもらう"},{"f":"send out for ～","b":"(食べ物)の出前を頼む"},{"f":"set aside ～","b":"(時間・金など)をとっておく、～をわきへどける"},{"f":"set down ～","b":"～を書き留める"},{"f":"set in","b":"(季節・流行・好ましくないものなどが)始まる、起こる"},{"f":"set off (～)","b":"出発する、～を引き起こす、～を作動させる"},{"f":"set out to do ～","b":"～することに着手する、～し始める"},{"f":"set up ～","b":"(会合など)を準備する、～を設置する、(会社・組織など)を作る"},{"f":"settle down","b":"ゆったりとくつろぐ、落ち着く、定住する"},{"f":"settle up (with ～)","b":"(～と)精算する、(～に)勘定を支払う"},{"f":"shake up ～","b":"～を刷新する、～を動揺させる、～を奮い立たせる"},{"f":"show off (～)","b":"いいところを見せる、～を見せびらかす"},{"f":"show up","b":"現れる、やってくる"},{"f":"sign up for ～","b":"(署名して)～に参加する、(受講など)の届けを出す"},{"f":"single out ～","b":"～を(特に)選び出す"},{"f":"sink in","b":"十分に理解される、分かってもらう"},{"f":"sit back","b":"何もしないで[手をこまねいて]いる、くつろぐ、(いすに)深く座る"},{"f":"sit by","b":"(悪い事態を)黙って見ている、傍観する"},{"f":"sit in","b":"参加する、見学[参観]する、代理を務める"},{"f":"skim over ～","b":"～をざっと見る、～表面的に扱う"},{"f":"slip by","b":"(時・機会が)いつの間にか過ぎる"},{"f":"smooth over ～","b":"(話し合いをして)(問題・困難など)を処理しやすくする"},{"f":"speak for ～","b":"～を代表して意見を述べる、～を代弁する、～への支持を表明する"},{"f":"split up (～)","b":"別れる、分裂する、～を分裂させる"},{"f":"spring from ～","b":"～から生じる、(人が)～の出である"},{"f":"spring up","b":"急に生まれる、急成長する"},{"f":"stand down (as ～)","b":"(公職など)を辞任する"},{"f":"stand for ～","b":"～の略である、～を意味する、～を支持する"},{"f":"stand up to ～","b":"～に抵抗する、～に立ち向かう、～に耐える"},{"f":"stay off ～","b":"(健康のため)～を控える、～に近づかない"},{"f":"step down [aside]","b":"辞任する"},{"f":"stick around","b":"そこらで待つ、帰らずにいる"},{"f":"stick to [by] ～","b":"(主義など)を堅持する、～をやり続ける"},{"f":"stick up for ～","b":"～をあくまでも擁護する、～を支持する"},{"f":"stick with ～","b":"～を最後までやり抜く、～を続けてする"},{"f":"stir in ～","b":"～を入れてかき混ぜる"},{"f":"stir up ～","b":"(騒ぎなど)を引き起こす、(想像力・記憶など)をかき立てる"},{"f":"sum up ～","b":"～を要約する"},{"f":"take in ～","b":"～を摂取する、(光景など)を観察する、～をだます、～を理解する"},{"f":"tale on ～","b":"(特にきつい仕事・責任)を引き受ける"},{"f":"take over ～","b":"～を引き継ぐ、～を買収する、～を占領する"},{"f":"take up ～","b":"～を趣味[職業・学問]として始める、(問題など)を取り上げる"},{"f":"talk down to A","b":"Aを見下した調子で話す"},{"f":"talk A into doing ～","b":"Aを説得して～させる"},{"f":"talk up ～","b":"(人・もの)を実際以上に興味深いもののように話す"},{"f":"tear down ～","b":"～を取り壊す、～を解体する、～を殴り倒す"},{"f":"tell on ～","b":"(特に子供が)～のことを告げ口する、～にこたえる"},{"f":"the other way around","b":"(方角・事情などが)逆に[で]"},{"f":"throw off ～","b":"(衣服など)をさっと脱ぐ[脱ぎ捨てる]、～を払いのける"},{"f":"throw up (～)","b":"嘔吐する、(食べ物)を吐く"},{"f":"tidy up ～","b":"(部屋・家・机など)を片付ける、～を整理する"},{"f":"tie up ～","b":"忙しくて身動きできない、～を固く縛る"},{"f":"tip over (～)","b":"ひっくり返る、倒れる、～をひっくり返す"},{"f":"touch up ～","b":"(絵・文章・化粧など)を手直しする、～を修正する"},{"f":"track down ～","b":"～を追跡して捕らえる、～を追い詰める"},{"f":"trip up (A)","b":"Aをつまずかせる、つまずく、しくじる"},{"f":"try out ～","b":"～を試してみる、～の効果を試す"},{"f":"tune in (to ～)","b":"(局・番組などに)テレビ[ラジオ]のチャンネルを合わせる"},{"f":"tune up (～)","b":"(楽器)を調律する、(エンジン・機械など)を整備する、調律する"},{"f":"turn around (～)","b":"(商売・経済など)を好転させる、～の向きを変える、好転する"},{"f":"turn away ～","b":"～を追い払う、(客など)の入場を断る、～を背ける"},{"f":"turn in (～)","b":"～を提出する、寝る"},{"f":"turn out","b":"であることがわかる、集まる"},{"f":"turn to ～","b":"～に頼る、(犯罪・悪習など)に走る、～に取りかかる"},{"f":"walk off [away] with ～","b":"～を盗む、(賞など)をあっさり手に入れる"},{"f":"wander off","b":"はぐれる、(道路・場所から)外れる、(主題から)脱線する"},{"f":"want for ～","b":"～を欠いている"},{"f":"wash away ～","b":"～を洗い流す、(記憶・感情など)を洗い去る"},{"f":"wash down ～","b":"(食べ物など)を流し込む、～を洗い流す"},{"f":"watch over ～","b":"～の世話をする、～を見守る、～を監視する"},{"f":"wear off","b":"(薬効・印象・痛みなどが)しだいに弱まる、すり減ってなくなる"},{"f":"wear out ～","b":"～を疲れ果てさせる"},{"f":"weigh on ～","b":"～に重くのしかかる、～を圧迫する、～を苦しめる"},{"f":"win over ～","b":"～を説得する"},{"f":"wipe out ～","b":"～を消滅[絶滅]させる、～を撲滅する"},{"f":"work out ～","b":"(計画・対策など)を練る、(問題)を解決する、～を計算する"},{"f":"wrap up ～","b":"(仕事・交渉など)を滞りなく終える"}];
+
+const SD=[
+  {id:'sample-en',name:'英単語 Basic',frontLabel:'英語',backLabel:'日本語',cards:[{f:'abandon',b:'捨てる・断念する'},{f:'absolute',b:'絶対的な'},{f:'acquire',b:'習得する'},{f:'adapt',b:'適応する'},{f:'assess',b:'評価する'},{f:'benefit',b:'利益・恩恵'},{f:'capable',b:'能力のある'},{f:'confirm',b:'確認する'},{f:'create',b:'作る・創造する'},{f:'define',b:'定義する'},{f:'effort',b:'努力'},{f:'emerge',b:'現れる'},{f:'factor',b:'要因'},{f:'generate',b:'生み出す'},{f:'impact',b:'影響'}],wrongIds:[],masteredIds:[]},
+  {id:'ex1-200',name:'EX1-200',frontLabel:'英語',backLabel:'日本語',cards:EX1_200,wrongIds:[],masteredIds:[]}
+,
+  {id:'pastan-pre1',name:'\u30d1\u30b9\u5358 \u6e96\u4e00\u7d1a',frontLabel:'\u82f1\u8a9e',backLabel:'\u65e5\u672c\u8a9e',cards:PASTAN_PRE1,wrongIds:[],masteredIds:[]}];
+const CHUNK_OPTIONS=[10,25,50,100,'全部'];
+const BAR_COLORS=['#bfd7ff','#7aacf7','#4f8ef7','#2d5dd6','#1a3a6b'];
+
+function ts(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function loadWithMigration(){
+  try{const r=localStorage.getItem('flashgo_v14');if(r)return JSON.parse(r);}catch(e){}
+  let m={decks:SD,settings:{revealDelay:1000,autoNextDelay:1000},dailyLog:{},streak:{current:0,best:0,lastDate:null},homeAICache:{date:null,text:null},cardHistory:{},speedBest:{},milestoneShown:false};
+  for(const key of['flashgo_v13','flashgo_v12','flashgo_v11','flashgo_v10','flashgo_v9']){
+    try{const r=localStorage.getItem(key);if(!r)continue;const old=JSON.parse(r);
+      if(old.decks){m.decks=old.decks;if(!m.decks.find(d=>d.id==='ex1-200'))m.decks.push({id:'ex1-200',name:'EX1-200',frontLabel:'英語',backLabel:'日本語',cards:EX1_200,wrongIds:[],masteredIds:[]});}
+      if(old.dailyLog)m.dailyLog=old.dailyLog;if(old.streak)m.streak=old.streak;
+      if(old.cardHistory)m.cardHistory=old.cardHistory;if(old.speedBest)m.speedBest=old.speedBest;
+      if(old.milestoneShown)m.milestoneShown=old.milestoneShown;break;
+    }catch(e){}
+  }
+  return m;
+}
+let S=loadWithMigration();
+if(!S.settings)S.settings={revealDelay:1000,autoNextDelay:1000};
+if(S.settings.correctNextDelay===undefined)S.settings.correctNextDelay=1000;
+if(S.settings.speechEnabled===undefined)S.settings.speechEnabled=false;
+if(S.settings.speechRate===undefined)S.settings.speechRate=1;
+if(!S.dailyLog)S.dailyLog={};if(!S.streak)S.streak={current:0,best:0,lastDate:null};
+if(!S.homeAICache)S.homeAICache={date:null,text:null};if(!S.cardHistory)S.cardHistory={};
+if(!S.speedBest)S.speedBest={};if(S.milestoneShown===undefined)S.milestoneShown=false;
+if(!S.decks.find(d=>d.id==='ex1-200')){S.decks.push({id:'ex1-200',name:'EX1-200',frontLabel:'英語',backLabel:'日本語',cards:EX1_200,wrongIds:[],masteredIds:[]});}
+if(!S.decks.find(d=>d.id==='pastan-pre1')){S.decks.push({id:'pastan-pre1',name:'\u30d1\u30b9\u5358 \u6e96\u4e00\u7d1a',frontLabel:'\u82f1\u8a9e',backLabel:'\u65e5\u672c\u8a9e',cards:PASTAN_PRE1,wrongIds:[],masteredIds:[]});}
+function save(){try{localStorage.setItem('flashgo_v14',JSON.stringify(S));}catch(e){}}
+function repairDeckNames(){
+  const d=S.decks.find(x=>x.id==='pastan-pre1');
+  if(!d)return;
+  let changed=false;
+  if(d.name!=='\u30d1\u30b9\u5358 \u6e96\u4e00\u7d1a'){d.name='\u30d1\u30b9\u5358 \u6e96\u4e00\u7d1a';changed=true;}
+  if(d.frontLabel!=='\u82f1\u8a9e'){d.frontLabel='\u82f1\u8a9e';changed=true;}
+  if(d.backLabel!=='\u65e5\u672c\u8a9e'){d.backLabel='\u65e5\u672c\u8a9e';changed=true;}
+  if(!Array.isArray(d.cards)||d.cards.length!==PASTAN_PRE1.length){d.cards=PASTAN_PRE1;changed=true;}
+  if(changed)save();
+}
+function ensureDeckOrder(){
+  if(!Array.isArray(S.decks))S.decks=[];
+  let changed=false;
+  S.decks.forEach((d,i)=>{if(d.pinned===undefined){d.pinned=false;changed=true;}if(d.order===undefined){d.order=i;changed=true;}});
+  S.decks.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||(a.order||0)-(b.order||0));
+  S.decks.forEach((d,i)=>{if(d.order!==i){d.order=i;changed=true;}});
+  if(changed)save();
+}
+function moveDeck(deckId,dir){
+  ensureDeckOrder();
+  const idx=S.decks.findIndex(d=>d.id===deckId);
+  if(idx<0)return;
+  const deck=S.decks[idx];
+  let target=idx+dir;
+  while(target>=0&&target<S.decks.length&&S.decks[target].pinned!==deck.pinned)target+=dir;
+  if(target<0||target>=S.decks.length)return;
+  const tmp=S.decks[idx];S.decks[idx]=S.decks[target];S.decks[target]=tmp;
+  S.decks.forEach((d,i)=>d.order=i);
+  save();rHome();
+}
+function toggleDeckPin(deckId){
+  ensureDeckOrder();
+  const d=S.decks.find(x=>x.id===deckId);if(!d)return;
+  d.pinned=!d.pinned;
+  S.decks.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||(a.order||0)-(b.order||0));
+  S.decks.forEach((x,i)=>x.order=i);
+  save();rHome();
+}
+repairDeckNames();ensureDeckOrder();
+
+let cDeck=null,sQ=[],cIdx=0,sC=0,sW=0,rTimer=null;
+let answerLocked=false,answerTimer=null,pendingWrongAnswer=null;
+let isAuto=false,aTimer=null,aPhase='q',aPaused=false,aMissed=false;
+let sessionStart=null,cardStart=null,cardTimings=[];
+let reviewDeckFilter='all';
+let detailDeckId=null,detailChunk='全部',detailWlFilter='all',detailStartPos=0;
+let screenHistory=[];
+
+const $=id=>document.getElementById(id);
+function cleanSpeechText(text){return String(text||'').replace(/[〜～].*$/,'').replace(/\s*\\[.*?\\]/g,'').trim();}
+function speakWord(text){
+  if(!S.settings.speechEnabled||!('speechSynthesis' in window))return;
+  const word=cleanSpeechText(text);if(!word)return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(word);
+  u.lang='en-US';u.rate=S.settings.speechRate||1;u.pitch=1;
+  window.speechSynthesis.speak(u);
+}
+function stopSpeech(){if('speechSynthesis' in window)window.speechSynthesis.cancel();}
+function updateToggleRow(inputId){
+  const input=$(inputId);if(!input)return;
+  const row=input.closest('.shuffle-row');if(row)row.classList.toggle('is-on',input.checked);
+}
+function bindToggleRow(inputId){
+  const input=$(inputId);if(!input)return;
+  const row=input.closest('.shuffle-row');if(!row)return;
+  row.addEventListener('click',e=>{
+    if(e.target===input||e.target.closest('.toggle-switch'))return;
+    input.checked=!input.checked;
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+}
+function SS(id,addHist=true){
+  const cur=document.querySelector('.screen.active')?.id;
+  if(addHist&&cur&&cur!==id)screenHistory.push(cur);
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function goBack(){
+  if(screenHistory.length>0){
+    const p=screenHistory.pop();
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    $(p).classList.add('active');
+    if(p==='home-screen')rHome();
+  }else{SS('home-screen',false);rHome();}
+}
+
+/* 習得グラフ */
+function calcMastery(){const c={1:0,2:0,3:0,4:0,5:0};Object.values(S.cardHistory).forEach(e=>{const ok=e.attempts.filter(a=>a.ok).length;if(ok>=5)c[5]++;else if(ok>=4)c[4]++;else if(ok>=3)c[3]++;else if(ok>=2)c[2]++;else if(ok>=1)c[1]++;});return c;}
+function renderMastery(){
+  const c=calcMastery();const total=Object.values(c).reduce((a,b)=>a+b,0);const max=Math.max(1,...Object.values(c));
+  $('mastery-total-label').textContent=`全${total}単語`;
+  const bw=$('mastery-bars');bw.innerHTML='';
+  [1,2,3,4,5].forEach((n,i)=>{const v=c[n]||0,p=Math.round((v/max)*100);const w=document.createElement('div');w.className='mastery-bar-wrap';w.innerHTML=`<div class="mastery-bar-val">${v}</div><div class="mastery-bar-track" style="height:50px;"><div class="mastery-bar-fill" style="height:${p}%;background:${BAR_COLORS[i]};"></div></div><div class="mastery-bar-lbl">${n}回${n===5?'+':''}</div>`;bw.appendChild(w);});
+  const g5=c[5]||0,gp=Math.min(100,Math.round((g5/1000)*100));$('mastery-goal-count').textContent=`${g5} / 1000`;$('mastery-goal-bar').style.width=gp+'%';
+  if(g5>=1000&&!S.milestoneShown){S.milestoneShown=true;save();setTimeout(showMilestone,500);}
+}
+function showMilestone(){$('milestone-overlay').classList.add('show');const cols=['#4f8ef7','#ffd700','#ff6b6b','#51cf66','#cc5de8','#ff922b'];for(let i=0;i<60;i++){const el=document.createElement('div');el.className='confetti-piece';el.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()}s;transform:rotate(${Math.random()*360}deg);`;document.body.appendChild(el);setTimeout(()=>el.remove(),3500);}}
+$('btn-milestone-close').addEventListener('click',()=>$('milestone-overlay').classList.remove('show'));
+
+/* AI */
+async function callAI(p){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:150,messages:[{role:'user',content:p}]})});const d=await r.json();return d.content?.[0]?.text||null;}
+async function genHomeAI(){
+  const el=$('home-ai-text');const today=ts();
+  if(S.homeAICache.date===today&&S.homeAICache.text){el.textContent=S.homeAICache.text;return;}
+  el.innerHTML='<div class="ai-loading"><span></span><span></span><span></span></div>';
+  const tl=S.dailyLog[today]||{total:0,correct:0,wrong:0};const streak=S.streak.current;const done=tl.total>0;
+  const rate=done?Math.round((tl.correct/tl.total)*100):null;const hour=new Date().getHours();const th=hour<12?'朝':hour<17?'昼':hour<21?'夕方':'夜';
+  let p;if(!done)p=`暗記アプリ「flashgo」のAIキャラ。今は${th}。未学習。連続${streak}日。優しく背中を押す日本語1〜2文。絵文字1〜2個。`;
+  else if(rate>=90)p=`暗記アプリ「flashgo」のAIキャラ。今日${tl.total}枚で正解率${rate}%、連続${streak}日。褒めて意欲を高める日本語1〜2文。絵文字2個。`;
+  else if(rate>=70)p=`暗記アプリ「flashgo」のAIキャラ。今日${tl.total}枚で正解率${rate}%、連続${streak}日。褒めつつ苦手単語への挑戦を促す日本語1〜2文。絵文字1〜2個。`;
+  else p=`暗記アプリ「flashgo」のAIキャラ。今日${tl.total}枚で正解率${rate}%と苦戦、連続${streak}日。温かくフォローする日本語1〜2文。絵文字1個。`;
+  try{const t=await callAI(p);if(t){el.textContent=t;S.homeAICache={date:today,text:t};save();}else throw 0;}
+  catch{const fb=done?['今日もよく頑張りました！✨','素晴らしい取り組みです 💪']:['さあ今日も始めよう！🔥','1枚からでもOK！📚 一緒に頑張ろう'];el.textContent=fb[Math.floor(Math.random()*fb.length)];}
+}
+async function genResultAI(rate,total,streak,avg,isGood){
+  const el=$('ai-comment-text');el.innerHTML='<div class="ai-loading"><span></span><span></span><span></span></div>';
+  const p=isGood?`暗記アプリ「flashgo」のAIキャラ。${total}枚で正解率${rate}%、平均${avg.toFixed(1)}秒/枚。褒めて意欲を高める日本語1〜2文、絵文字1〜2個。`:`暗記アプリ「flashgo」のAIキャラ。${total}枚で正解率${rate}%。温かくフォローする日本語1〜2文、絵文字1個。`;
+  try{const t=await callAI(p);if(t){el.textContent=t;}else throw 0;}
+  catch{const fb=isGood?['今日も最高！🔥 この調子で続けよう','素晴らしい！✨ どんどん伸びるよ']:['うまくいかない日もある 🌱','明日また挑戦しよう ✨'];el.textContent=fb[Math.floor(Math.random()*fb.length)];}
+}
+function getRank(avg){if(avg<=2.0)return{r:'S',label:'かなり速い！',color:'#ffd700'};if(avg<=3.0)return{r:'A',label:'いいテンポ',color:'#c0f0a0'};if(avg<=4.5)return{r:'B',label:'良いペース',color:'#a0d0ff'};if(avg<=6.5)return{r:'C',label:'じっくり確認',color:'#ffb0a0'};return{r:'D',label:'ゆっくり着実に',color:'#aaa'};}
+
+function calcStreak(){
+  const today=ts();const done=!!(S.dailyLog[today]?.total>0);
+  if(done){const yd=new Date();yd.setDate(yd.getDate()-1);const yds=`${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,'0')}-${String(yd.getDate()).padStart(2,'0')}`;if(S.streak.lastDate!==today){S.streak.current=(S.streak.lastDate===yds)?S.streak.current+1:1;S.streak.lastDate=today;if(S.streak.current>S.streak.best)S.streak.best=S.streak.current;save();}}
+  else{const yd=new Date();yd.setDate(yd.getDate()-1);const yds=`${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,'0')}-${String(yd.getDate()).padStart(2,'0')}`;if(S.streak.lastDate&&S.streak.lastDate!==today&&S.streak.lastDate!==yds){S.streak.current=0;save();}}
+  return{current:S.streak.current,best:S.streak.best,done};
+}
+function renderStreak(){
+  const{current,best,done}=calcStreak();$('streak-num').textContent=current;$('streak-best').textContent=best+'日';
+  $('streak-fire').style.filter=current===0?'grayscale(1)':'none';
+  const b=$('streak-badge');if(done){b.className='streak-badge done';$('streak-badge-text').textContent='✓ 今日の学習完了！';}else{b.className='streak-badge pending';$('streak-badge-text').textContent='⚡ 今日まだやってない';}
+}
+function logA(f,b,did,ok){const t=ts();if(!S.dailyLog[t])S.dailyLog[t]={total:0,correct:0,wrong:0,cards:[]};const l=S.dailyLog[t];l.total++;ok?l.correct++:l.wrong++;const e=l.cards.find(c=>c.f===f&&c.deckId===did);if(e){e.correct+=ok?1:0;e.wrong+=ok?0:1;}else l.cards.push({f,b,deckId:did,correct:ok?1:0,wrong:ok?0:1});}
+function logCardHist(deckId,f,b,ok,sec){const key=`${deckId}::${f}`;if(!S.cardHistory[key])S.cardHistory[key]={f,b,deckId,attempts:[]};S.cardHistory[key].attempts.push({ok,date:ts(),sec:parseFloat(sec.toFixed(2))});if(S.cardHistory[key].attempts.length>20)S.cardHistory[key].attempts=S.cardHistory[key].attempts.slice(-20);}
+
+function rHome(){
+  screenHistory=[];const list=$('deck-list'),emp=$('empty-msg');list.innerHTML='';
+  renderStreak();renderMastery();
+  const today=ts();if(S.homeAICache.date!==today)S.homeAICache={date:null,text:null};
+  genHomeAI();
+  if(!S.decks.length){emp.style.display='block';return;}emp.style.display='none';
+  ensureDeckOrder();
+  S.decks.forEach((d,i)=>{
+    const w=d.wrongIds?.length||0,m=d.masteredIds?.length||0;
+    const prev=S.decks[i-1],next=S.decks[i+1];
+    const div=document.createElement('div');div.className='deck-card'+(d.pinned?' pinned':'');
+    div.innerHTML=`<div class="deck-card-main"><div class="deck-card-info"><div class="deck-name">${d.pinned?'<span class="deck-pin-label">固定</span>':''}${d.name}</div><div class="deck-meta">${d.cards.length}枚 · 習得${m} · 要復習${w}</div></div><div class="deck-actions"><button type="button" class="deck-action-btn ${d.pinned?'pinned':''}" data-action="pin" title="${d.pinned?'固定を外す':'上に固定'}">${d.pinned?'解除':'固定'}</button><button type="button" class="deck-action-btn" data-action="up" title="上へ" ${(!prev||prev.pinned!==d.pinned)?'disabled':''}>↑</button><button type="button" class="deck-action-btn" data-action="down" title="下へ" ${(!next||next.pinned!==d.pinned)?'disabled':''}>↓</button><i class="ti ti-chevron-right" style="color:var(--color-text-tertiary);font-size:16px;"></i></div></div>`;
+    div.addEventListener('click',e=>{
+      const btn=e.target.closest('[data-action]');
+      if(btn){
+        e.preventDefault();e.stopPropagation();
+        const action=btn.dataset.action;
+        if(action==='pin')toggleDeckPin(d.id);
+        if(action==='up')moveDeck(d.id,-1);
+        if(action==='down')moveDeck(d.id,1);
+        return;
+      }
+      openDeckDetail(d.id);
+    });
+    list.appendChild(div);
+  });
+}
+
+/* ── デッキ詳細（開始位置スライダー付き） ── */
+function openDeckDetail(deckId,addHist=true){
+  detailDeckId=deckId;detailWlFilter='all';detailStartPos=0;
+  const d=S.decks.find(x=>x.id===deckId);if(!d)return;
+  detailChunk=d.lastChunk||'全部';
+  $('detail-screen-title').textContent=d.name;$('detail-deck-name').textContent=d.name;
+  $('detail-deck-meta').textContent=`${d.frontLabel||'表'} → ${d.backLabel||'裏'}`;
+  const m=d.masteredIds?.length||0,w=d.wrongIds?.length||0;
+  $('detail-stat-total').textContent=d.cards.length;$('detail-stat-mastered').textContent=m;$('detail-stat-wrong').textContent=w;
+  $('detail-speech-toggle').checked=!!S.settings.speechEnabled;
+  $('shuffle-toggle').checked=false;
+  updateToggleRow('detail-speech-toggle');updateToggleRow('shuffle-toggle');
+  buildChunkSelector(d.cards.length);
+  setupStartPosSlider(d);
+  updateRangeInfo(d);
+  const rb=$('btn-start-retry');if(w>0){rb.style.display='block';rb.textContent=`✕ の ${w} 枚だけ復習`;}else rb.style.display='none';
+  renderDetailWordList(d,'all');
+  document.querySelectorAll('.wl-filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));
+  SS('deck-detail-screen',addHist);
+}
+
+function setupStartPosSlider(d){
+  const total=d.cards.length;
+  $('start-pos-input').min=1;$('start-pos-input').max=total;
+  $('start-pos-max-label').textContent=`/ ${total}番`;
+  setStartPos(1,false);
+  // シャッフルON時はスライダー非活性
+  updateStartPosState();
+}
+function setStartPos(startNum,refresh=true){
+  const d=S.decks.find(x=>x.id===detailDeckId);
+  const total=d?d.cards.length:1;
+  const safe=Math.max(1,Math.min(total,Math.round(Number(startNum)||1)));
+  detailStartPos=safe-1;
+  $('start-pos-input').value=safe;
+  $('start-pos-display').textContent=`${safe}番から`;
+  if(refresh)updateRangeInfo(d);
+}
+function updateStartPosState(){
+  const shuffleOn=$('shuffle-toggle').checked;
+  $('start-pos-section').style.opacity=shuffleOn?'0.35':'1';
+  $('start-pos-section').classList.toggle('disabled',shuffleOn);
+  $('start-pos-input').disabled=shuffleOn;
+  if(shuffleOn)$('start-pos-display').textContent='シャッフル中';
+  else{$('start-pos-display').textContent=`${detailStartPos+1}番から`;}
+}
+$('start-pos-input').addEventListener('input',e=>{
+  if(e.target.value==='')return;
+  const d=S.decks.find(x=>x.id===detailDeckId);
+  const total=d?d.cards.length:1;
+  const v=Number(e.target.value);
+  if(Number.isFinite(v)&&v>=1&&v<=total){
+    detailStartPos=Math.round(v)-1;
+    $('start-pos-display').textContent=`${detailStartPos+1}番から`;
+    updateRangeInfo(d);
+  }
+});
+$('start-pos-input').addEventListener('change',e=>setStartPos(e.target.value));
+$('start-pos-input').addEventListener('blur',e=>{if(e.target.value==='')setStartPos(1);});
+bindToggleRow('shuffle-toggle');bindToggleRow('detail-speech-toggle');
+
+function buildChunkSelector(total){
+  const wrap=$('chunk-selector');wrap.innerHTML='';
+  if(detailChunk!=='全部'&&detailChunk>total)detailChunk='全部';
+  CHUNK_OPTIONS.forEach(opt=>{
+    if(opt!=='全部'&&opt>total)return;
+    const btn=document.createElement('button');btn.className='chunk-btn'+(opt===detailChunk?' active':'');
+    btn.textContent=opt==='全部'?`全部(${total})`:opt+'枚';btn.dataset.val=opt;
+    btn.addEventListener('click',()=>{detailChunk=opt;const d=S.decks.find(x=>x.id===detailDeckId);if(d){d.lastChunk=opt;save();}document.querySelectorAll('.chunk-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');updateRangeInfo(d);});
+    wrap.appendChild(btn);
+  });
+}
+function updateRangeInfo(d){
+  if(!d)return;
+  const total=d.cards.length;
+  const startIdx=Math.min($('shuffle-toggle').checked?0:detailStartPos,total-1);
+  const remaining=total-startIdx;
+  const chunk=detailChunk==='全部'?remaining:Math.min(detailChunk,remaining);
+  const startNum=startIdx+1;
+  const endNum=Math.min(startIdx+chunk,total);
+  if($('shuffle-toggle').checked){
+    $('range-info').textContent=detailChunk==='全部'?`全${total}枚をシャッフル`:`${chunk}枚をシャッフル`;
+  }else{
+    $('range-info').textContent=`${startNum}〜${endNum}番 (${chunk}枚)`;
+  }
+}
+$('shuffle-toggle').addEventListener('change',()=>{
+  updateToggleRow('shuffle-toggle');
+  updateStartPosState();
+  updateRangeInfo(S.decks.find(x=>x.id===detailDeckId));
+});
+$('detail-speech-toggle').addEventListener('change',e=>{
+  S.settings.speechEnabled=e.target.checked;
+  save();
+  updateToggleRow('detail-speech-toggle');
+  if(!S.settings.speechEnabled)stopSpeech();
+  $('speech-toggle').checked=!!S.settings.speechEnabled;
+});
+
+function getStudyQueue(d,retryOnly=false){
+  if(retryOnly){
+    let cards=d.cards.filter(c=>d.wrongIds.includes(c.f));
+    if($('shuffle-toggle').checked)cards=cards.sort(()=>Math.random()-0.5);
+    return cards;
+  }
+  let cards=d.cards.slice();
+  if($('shuffle-toggle').checked){
+    cards=cards.sort(()=>Math.random()-0.5);
+    if(detailChunk!=='全部')cards=cards.slice(0,detailChunk);
+  }else{
+    const startIdx=Math.min(detailStartPos,cards.length-1);
+    cards=cards.slice(startIdx);
+    if(detailChunk!=='全部')cards=cards.slice(0,detailChunk);
+  }
+  return cards;
+}
+function renderDetailWordList(d,filter){
+  const tbody=$('detail-word-tbody');tbody.innerHTML='';
+  const m=d.masteredIds||[],w=d.wrongIds||[];
+  const fl=d.cards.filter(c=>{if(filter==='mastered')return m.includes(c.f);if(filter==='wrong')return w.includes(c.f);if(filter==='untouched')return !m.includes(c.f)&&!w.includes(c.f);return true;});
+  if(!fl.length){const tr=document.createElement('tr');tr.innerHTML=`<td colspan="4" style="text-align:center;color:var(--color-text-tertiary);padding:1.5rem;">該当なし</td>`;tbody.appendChild(tr);return;}
+  fl.forEach((c,i)=>{
+    const realIdx=d.cards.indexOf(c);
+    const iM=m.includes(c.f),iW=w.includes(c.f);const bg=iM?`<span class="status-badge s-mastered">✓ 習得</span>`:iW?`<span class="status-badge s-wrong">✕ 要復習</span>`:`<span class="status-badge s-untouched">未学習</span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-size:11px;color:var(--color-text-tertiary);font-family:'DM Mono',monospace;">${realIdx+1}</td><td style="font-weight:600;">${c.f}</td><td style="color:var(--color-text-secondary);">${c.b}</td><td>${bg}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+document.querySelectorAll('.wl-filter-btn').forEach(b=>{b.addEventListener('click',()=>{detailWlFilter=b.dataset.filter;document.querySelectorAll('.wl-filter-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');const d=S.decks.find(x=>x.id===detailDeckId);if(d)renderDetailWordList(d,b.dataset.filter);});});
+$('btn-start-normal').addEventListener('click',()=>{const d=S.decks.find(x=>x.id===detailDeckId);if(!d)return;sStudy(d,getStudyQueue(d),false);});
+$('btn-start-auto').addEventListener('click',()=>{const d=S.decks.find(x=>x.id===detailDeckId);if(!d)return;sAuto(d,getStudyQueue(d));});
+$('btn-start-retry').addEventListener('click',()=>{const d=S.decks.find(x=>x.id===detailDeckId);if(!d)return;sStudy(d,getStudyQueue(d,true),true);});
+$('btn-detail-back').addEventListener('click',goBack);
+
+/* 通常学習 */
+function sStudy(d,queue,isRetry){
+  if(!queue.length){alert('対象の単語がありません。');return;}
+  cDeck=d.id;isAuto=false;sQ=queue;cIdx=0;sC=0;sW=0;cardTimings=[];sessionStart=Date.now();
+  clearTimeout(answerTimer);answerLocked=false;pendingWrongAnswer=null;
+  $('study-deck-name').textContent=d.name;
+  const startNum=isRetry?'復習':($('shuffle-toggle').checked?'シャッフル':`${detailStartPos+1}番〜`);
+  const label=isRetry?`復習モード (${sQ.length}枚)`:`${startNum} (${sQ.length}枚)`;
+  $('mode-chip-wrap').innerHTML=isRetry?`<div class="mode-chip retry"><i class="ti ti-refresh"></i> ${label}</div>`:`<div class="mode-chip all"><i class="ti ti-cards"></i> ${label}</div>`;
+  SS('study-screen');shCard();
+}
+function shCard(){
+  const c=sQ[cIdx],tot=sQ.length;
+  $('study-counter').textContent=`${cIdx+1} / ${tot}`;$('progress-fill').style.width=`${(cIdx/tot)*100}%`;
+  const fc=$('flash-card');fc.classList.remove('revealed');
+  $('card-front').textContent=c.f;
+  speakWord(c.f);
+  const back=$('card-back');back.style.visibility='hidden';back.style.opacity='0';back.textContent=c.b;
+  const ans=$('answer-buttons');ans.classList.remove('locked','correct','wrong');ans.classList.add('pre-reveal');
+  answerLocked=false;pendingWrongAnswer=null;$('btn-next-wrong').classList.remove('show');clearTimeout(answerTimer);
+  clearTimeout(rTimer);cardStart=Date.now();
+  const dl=S.settings.revealDelay;
+  if(dl===0){revealCard();return;}
+  rTimer=setTimeout(revealCard,dl);
+}
+function revealCard(){$('flash-card').classList.add('revealed');const back=$('card-back');back.style.visibility='visible';back.style.opacity='1';$('answer-buttons').classList.remove('pre-reveal');}
+function hAns(ok){
+  if(answerLocked)return;
+  clearTimeout(rTimer);
+  answerLocked=true;
+  const sec=(Date.now()-cardStart)/1000;
+  const ans=$('answer-buttons');ans.classList.add('locked',ok?'correct':'wrong');
+  const wasPreReveal=$('answer-buttons').classList.contains('pre-reveal');
+  if(wasPreReveal)revealCard();
+  if(ok)answerTimer=setTimeout(()=>processAns(true,sec),S.settings.correctNextDelay||1000);
+  else{pendingWrongAnswer=sec;$('btn-next-wrong').classList.add('show');}
+}
+function processAns(ok,sec){
+  const d=S.decks.find(x=>x.id===cDeck);const c=sQ[cIdx];
+  if(!d.wrongIds)d.wrongIds=[];if(!d.masteredIds)d.masteredIds=[];
+  if(ok){sC++;d.wrongIds=d.wrongIds.filter(i=>i!==c.f);if(!d.masteredIds.includes(c.f))d.masteredIds.push(c.f);}
+  else{sW++;if(!d.wrongIds.includes(c.f))d.wrongIds.push(c.f);d.masteredIds=d.masteredIds.filter(i=>i!==c.f);}
+  cardTimings.push({f:c.f,b:c.b,ok,sec});logA(c.f,c.b,cDeck,ok);logCardHist(cDeck,c.f,c.b,ok,sec);save();cIdx++;
+  if(cIdx>=sQ.length)shResult();else shCard();
+}
+$('btn-redo-study').addEventListener('click',()=>{const d=S.decks.find(x=>x.id===cDeck);if(!d)return;sStudy(d,getStudyQueue(d),false);});
+
+/* フルオート */
+function sAuto(d,queue){
+  if(!queue.length){alert('対象の単語がありません。');return;}
+  cDeck=d.id;isAuto=true;sQ=queue;cIdx=0;sC=0;sW=0;cardTimings=[];sessionStart=Date.now();
+  aPaused=false;$('auto-deck-name').textContent=d.name;SS('auto-screen');aShQ();
+}
+function aShQ(){
+  if(aPaused)return;const c=sQ[cIdx],tot=sQ.length;
+  $('auto-counter').textContent=`${cIdx+1} / ${tot}`;
+  const afc=$('auto-flash-card');afc.classList.remove('revealed');
+  $('auto-front').textContent=c.f;
+  speakWord(c.f);
+  const ab=$('auto-back');ab.style.visibility='hidden';ab.style.opacity='0';ab.textContent=c.b;
+  aMissed=false;cardStart=Date.now();$('auto-miss-flash').classList.remove('show');afc.style.borderColor='';
+  $('auto-prog-fill').style.background='#4f8ef7';aPhase='q';uDots();
+  function run(dur,cb){$('auto-prog-fill').style.width='0%';const s=Date.now();function t(){if(aPaused)return;const p=Math.min(100,Math.round(((Date.now()-s)/dur)*100));$('auto-prog-fill').style.width=p+'%';if(p<100)aTimer=setTimeout(t,30);else cb();}aTimer=setTimeout(t,30);}
+  const dl=S.settings.revealDelay;
+  const afterQ=()=>{afc.classList.add('revealed');ab.style.visibility='visible';ab.style.opacity='1';aPhase='a';uDots();$('auto-prog-fill').style.background='var(--color-border-secondary)';run(S.settings.autoNextDelay,aCom);};
+  if(dl===0){afc.classList.add('revealed');ab.style.visibility='visible';ab.style.opacity='1';aPhase='a';uDots();$('auto-prog-fill').style.background='var(--color-border-secondary)';run(S.settings.autoNextDelay,aCom);}else run(dl,afterQ);
+}
+function aCom(){
+  const sec=(Date.now()-cardStart)/1000;const ok=!aMissed;
+  const d=S.decks.find(x=>x.id===cDeck);const c=sQ[cIdx];
+  if(!d.wrongIds)d.wrongIds=[];if(!d.masteredIds)d.masteredIds=[];
+  if(ok){sC++;d.wrongIds=d.wrongIds.filter(i=>i!==c.f);if(!d.masteredIds.includes(c.f))d.masteredIds.push(c.f);}
+  else{sW++;if(!d.wrongIds.includes(c.f))d.wrongIds.push(c.f);d.masteredIds=d.masteredIds.filter(i=>i!==c.f);}
+  cardTimings.push({f:c.f,b:c.b,ok,sec});logA(c.f,c.b,cDeck,ok);logCardHist(cDeck,c.f,c.b,ok,sec);save();cIdx++;
+  if(cIdx>=sQ.length)shResult();else aShQ();
+}
+function uDots(){const w=$('phase-dots');w.innerHTML='';['q','a'].forEach(p=>{const d=document.createElement('span');d.className='phase-dot '+(aPhase===p?'active':'inactive');w.appendChild(d);});}
+$('auto-card-wrap').addEventListener('click',()=>{if(aPaused)return;aMissed=true;const f=$('auto-miss-flash');f.classList.add('show');$('auto-flash-card').style.borderColor='#f5c1c1';setTimeout(()=>{f.classList.remove('show');$('auto-flash-card').style.borderColor='';},300);});
+$('btn-auto-pause').addEventListener('click',()=>{aPaused=!aPaused;const b=$('btn-auto-pause');if(aPaused){clearTimeout(aTimer);b.innerHTML=`<i class="ti ti-player-play" style="font-size:16px;"></i> 再開`;}else{b.innerHTML=`<i class="ti ti-player-pause" style="font-size:16px;"></i> 一時停止`;aShQ();}});
+$('btn-auto-home').addEventListener('click',()=>{stopSpeech();clearTimeout(aTimer);aPaused=false;goBack();});
+
+/* 結果 */
+function shResult(){
+  const tot=sQ.length,rate=Math.round((sC/tot)*100);
+  $('stat-correct').textContent=sC;$('stat-wrong').textContent=sW;$('stat-total').textContent=tot;$('stat-rate').textContent=rate+'%';
+  const d=S.decks.find(x=>x.id===cDeck);const rem=d.wrongIds?.length||0;
+  $('result-emoji').textContent=rate===100?'🏆':rate>=70?'🎉':'💪';
+  $('result-title').textContent=rate===100?'パーフェクト！':rate>=70?'よくできました！':'セッション完了！';
+  const rb=$('btn-retry-wrong');if(sW>0&&rem>0){rb.style.display='block';rb.textContent=`✕ だった ${rem} 枚だけ再挑戦`;}else rb.style.display='none';
+  const totalSec=(Date.now()-sessionStart)/1000,avgSec=totalSec/tot;
+  const rank=getRank(avgSec);const prev=S.speedBest[cDeck];const isNew=!prev||avgSec<prev;
+  if(isNew){S.speedBest[cDeck]=avgSec;save();}const best=S.speedBest[cDeck];
+  const rankEl=$('speed-rank');rankEl.textContent=rank.r;rankEl.className='speed-rank '+rank.r+' rank-anim';rankEl.style.color=rank.color;
+  $('speed-rank-label').textContent=rank.label;$('speed-total').textContent=totalSec.toFixed(1)+'s';$('speed-avg').textContent=avgSec.toFixed(2)+'s';$('speed-best').textContent=best?best.toFixed(2)+'s':'—';
+  $('speed-badge-new').style.display=isNew&&tot>=3?'inline-block':'none';
+  const miniTb=$('mini-hist-tbody');miniTb.innerHTML='';
+  cardTimings.forEach(({f,b,ok,sec})=>{const key=`${cDeck}::${f}`;const hist=(S.cardHistory[key]?.attempts||[]).slice(-6);const dots=hist.map(h=>`<div class="dot ${h.ok?'dot-ok':'dot-ng'}">${h.ok?'○':'✕'}</div>`).join('');const sc=sec<avgSec*0.7?'fast':sec>avgSec*1.5?'slow':'';const tr=document.createElement('tr');tr.innerHTML=`<td style="font-weight:600;font-size:12px;">${f}</td><td style="font-size:11px;color:var(--color-text-secondary);">${b}</td><td><div class="dot-row">${dots}</div></td><td class="sec-cell ${sc}">${sec.toFixed(1)}s</td>`;miniTb.appendChild(tr);});
+  calcStreak();// ストリーク更新のみ（表示なし）
+  SS('result-screen');S.homeAICache={date:null,text:null};save();genResultAI(rate,tot,S.streak.current,avgSec,rate>=70);
+}
+
+/* 振り返り */
+function renderDetailHist(df){
+  const tbody=$('detail-hist-tbody'),empty=$('detail-hist-empty'),wrap=$('detail-hist-wrap');tbody.innerHTML='';
+  let entries=Object.values(S.cardHistory);if(df&&df!=='all')entries=entries.filter(e=>e.deckId===df);
+  entries=entries.filter(e=>e.attempts?.length>0);entries.sort((a,b)=>{const la=a.attempts[a.attempts.length-1]?.date||'';const lb=b.attempts[b.attempts.length-1]?.date||'';return lb.localeCompare(la);});
+  if(!entries.length){empty.style.display='block';wrap.style.display='none';return;}
+  empty.style.display='none';wrap.style.display='';
+  entries.forEach(entry=>{
+    const{f,b,attempts}=entry;const recent=attempts.slice(-8);const today=ts();const isToday=attempts.some(a=>a.date===today);
+    let consec=0;for(let i=recent.length-1;i>=0;i--){if(recent[i].ok)consec++;else break;}
+    let cFail=0;for(let i=recent.length-1;i>=0;i--){if(!recent[i].ok)cFail++;else break;}
+    const secArr=attempts.filter(a=>a.sec!=null).map(a=>a.sec);const avgSec=secArr.length?secArr.reduce((a,b)=>a+b,0)/secArr.length:null;
+    const dotsHtml=recent.slice().reverse().map(a=>`<div class="dh-dot ${a.ok?'ok':'ng'}${a.date===today?' today-dot':''}">${a.ok?'○':'✕'}</div>`).join('');
+    let sh='';if(consec>=3)sh=`<span class="dh-streak good">🔥${consec}連続</span>`;else if(consec>=2)sh=`<span class="dh-streak good">✓${consec}連続</span>`;else if(cFail>=2)sh=`<span class="dh-streak bad">✕${cFail}連続</span>`;else if(attempts[attempts.length-1]?.ok)sh=`<span class="dh-streak mid">直近○</span>`;else sh=`<span class="dh-streak bad">直近✕</span>`;
+    const ac=avgSec!=null?(avgSec<=3.0?'fast':avgSec>=6.5?'slow':''):'';const at=avgSec!=null?`${avgSec.toFixed(1)}s`:'—';
+    const tr=document.createElement('tr');if(isToday)tr.style.background='rgba(79,142,247,0.04)';
+    tr.innerHTML=`<td><div class="dh-word">${f}</div><div class="dh-meaning">${b}</div>${isToday?'<span style="font-size:9px;background:#e8f0fe;color:#2d5dd6;padding:1px 5px;border-radius:4px;font-weight:600;">今日</span>':''}</td><td><div class="dh-attempts">${dotsHtml}</div><div style="font-size:9px;color:var(--color-text-tertiary);margin-top:3px;">${attempts.length}回挑戦</div></td><td>${sh}</td><td class="dh-avg ${ac}">${at}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function oReview(){
+  const today=ts();const d=new Date();$('review-date').textContent=`${d.getMonth()+1}月${d.getDate()}日`;
+  const tl=S.dailyLog[today]||{total:0,correct:0,wrong:0};$('rv-total').textContent=tl.total;$('rv-correct').textContent=tl.correct;$('rv-wrong').textContent=tl.wrong;
+  const rate=tl.total>0?Math.round((tl.correct/tl.total)*100):0;$('rv-rate-label').textContent=tl.total>0?rate+'%':'—';$('rv-rate-bar').style.width=(tl.total>0?rate:0)+'%';
+  const wb=$('week-bars');wb.innerHTML='';const mv=Math.max(1,...Array.from({length:7},(_,i)=>{const dd=new Date();dd.setDate(dd.getDate()-i);const k=`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;return(S.dailyLog[k]||{total:0}).total;}));
+  for(let i=6;i>=0;i--){const dd=new Date();dd.setDate(dd.getDate()-i);const k=`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;const val=(S.dailyLog[k]||{total:0}).total,lb=i===0?'今日':`${dd.getMonth()+1}/${dd.getDate()}`;const pct=Math.round((val/mv)*100);const row=document.createElement('div');row.className='day-bar-row';row.innerHTML=`<span class="day-bar-label">${lb}</span><div class="day-bar-track"><div class="day-bar-fill" style="width:${pct}%;background:${i===0?'#4f8ef7':'var(--color-border-secondary)'};"></div></div><span class="day-bar-num">${val}</span>`;wb.appendChild(row);}
+  const fr=$('deck-filter-row');fr.innerHTML='';const ab=document.createElement('button');ab.className='deck-filter-btn active';ab.textContent='すべて';ab.dataset.deckId='all';fr.appendChild(ab);
+  S.decks.forEach(d=>{const btn=document.createElement('button');btn.className='deck-filter-btn';btn.textContent=d.name;btn.dataset.deckId=d.id;fr.appendChild(btn);});
+  fr.querySelectorAll('.deck-filter-btn').forEach(btn=>{btn.addEventListener('click',()=>{fr.querySelectorAll('.deck-filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');reviewDeckFilter=btn.dataset.deckId;renderDetailHist(reviewDeckFilter);});});
+  reviewDeckFilter='all';renderDetailHist('all');
+  const ww=$('rv-weak-wrap'),we=$('rv-weak-empty');ww.innerHTML='';
+  const aw=[];S.decks.forEach(d2=>{(d2.wrongIds||[]).forEach(f=>{const c=d2.cards.find(x=>x.f===f);if(c)aw.push({f:c.f,b:c.b});});});
+  if(aw.length>0){we.style.display='none';aw.forEach(w=>{const ch=document.createElement('div');ch.className='weak-chip';ch.innerHTML=`<span>${w.f}</span><span style="font-size:11px;color:var(--color-text-tertiary);">${w.b}</span>`;ww.appendChild(ch);});}else we.style.display='block';
+  SS('review-screen');
+}
+
+function dtl(v){const ms=v*100;if(ms===0)return'0秒（即表示）';return`${(ms/1000).toFixed(1)}秒`;}
+function syncS(){const v=Math.round(S.settings.revealDelay/100);$('reveal-delay-slider').value=v;$('reveal-delay-val').textContent=dtl(v);const v2=Math.round(S.settings.autoNextDelay/100);$('auto-next-slider').value=v2;$('auto-next-val').textContent=dtl(v2);const v3=Math.round((S.settings.correctNextDelay||1000)/100);$('correct-next-slider').value=v3;$('correct-next-val').textContent=dtl(v3);$('speech-toggle').checked=!!S.settings.speechEnabled;const sr=Math.round((S.settings.speechRate||1)*10);$('speech-rate-slider').value=sr;$('speech-rate-val').textContent=(sr/10).toFixed(1)+'x';}
+$('reveal-delay-slider').addEventListener('input',e=>{const v=parseInt(e.target.value);S.settings.revealDelay=v*100;$('reveal-delay-val').textContent=dtl(v);save();});
+$('auto-next-slider').addEventListener('input',e=>{const v=parseInt(e.target.value);S.settings.autoNextDelay=v*100;$('auto-next-val').textContent=dtl(v);save();});
+$('correct-next-slider').addEventListener('input',e=>{const v=parseInt(e.target.value);S.settings.correctNextDelay=v*100;$('correct-next-val').textContent=dtl(v);save();});
+$('speech-toggle').addEventListener('change',e=>{S.settings.speechEnabled=e.target.checked;save();if($('detail-speech-toggle')){$('detail-speech-toggle').checked=!!S.settings.speechEnabled;updateToggleRow('detail-speech-toggle');}if(!S.settings.speechEnabled)stopSpeech();});
+$('speech-rate-slider').addEventListener('input',e=>{const v=parseInt(e.target.value);S.settings.speechRate=v/10;$('speech-rate-val').textContent=(v/10).toFixed(1)+'x';save();});
+$('btn-open-settings').addEventListener('click',()=>{syncS();$('settings-modal').classList.add('open');});
+$('btn-close-settings').addEventListener('click',()=>$('settings-modal').classList.remove('open'));
+$('settings-modal').addEventListener('click',e=>{if(e.target===$('settings-modal'))$('settings-modal').classList.remove('open');});
+$('btn-open-review').addEventListener('click',()=>oReview());
+$('btn-review-back').addEventListener('click',goBack);
+$('btn-to-home').addEventListener('click',()=>{stopSpeech();clearTimeout(rTimer);clearTimeout(answerTimer);answerLocked=false;pendingWrongAnswer=null;goBack();});
+$('btn-result-back').addEventListener('click',()=>{
+  const d=S.decks.find(x=>x.id===cDeck);
+  if(d){screenHistory=['home-screen'];openDeckDetail(d.id,false);}
+  else{SS('home-screen',false);rHome();}
+});
+$('btn-result-home').addEventListener('click',()=>{SS('home-screen',false);rHome();});
+$('btn-restart-all').addEventListener('click',()=>{const d=S.decks.find(x=>x.id===cDeck);if(!d)return;if(isAuto)sAuto(d,getStudyQueue(d));else sStudy(d,getStudyQueue(d),false);});
+$('btn-retry-wrong').addEventListener('click',()=>{const d=S.decks.find(x=>x.id===cDeck);if(!d)return;if(isAuto)sAuto(d,getStudyQueue(d,true));else sStudy(d,getStudyQueue(d,true),true);});
+$('btn-wrong').addEventListener('click',()=>hAns(false));
+$('btn-correct').addEventListener('click',()=>hAns(true));
+$('btn-next-wrong').addEventListener('click',()=>{if(pendingWrongAnswer==null)return;processAns(false,pendingWrongAnswer);});
+$('btn-add-deck').addEventListener('click',()=>{['deck-name-input','front-label-input','back-label-input','cards-input'].forEach(id=>$(id).value='');$('add-modal').classList.add('open');});
+$('btn-cancel-modal').addEventListener('click',()=>$('add-modal').classList.remove('open'));
+$('add-modal').addEventListener('click',e=>{if(e.target===$('add-modal'))$('add-modal').classList.remove('open');});
+$('btn-save-deck').addEventListener('click',()=>{
+  const name=$('deck-name-input').value.trim(),fl=$('front-label-input').value.trim()||'表',bl=$('back-label-input').value.trim()||'裏',raw=$('cards-input').value;
+  if(!name){alert('デッキ名を入力してください。');return;}
+  const lines=raw.trim().split('\n').filter(l=>l.trim()),cards=[];
+  lines.forEach(line=>{const sep=line.includes(':')?':':',';const parts=line.split(sep).map(s=>s.trim());if(parts.length>=2&&parts[0]&&parts[1])cards.push({f:parts[0],b:parts[1]});});
+  if(!cards.length){alert('単語が読み込めませんでした。');return;}
+  S.decks.push({id:'deck_'+Date.now(),name,frontLabel:fl,backLabel:bl,cards,wrongIds:[],masteredIds:[],pinned:false,order:S.decks.length,lastChunk:'全部'});
+  save();$('add-modal').classList.remove('open');rHome();
+});
+rHome();
+</script>
